@@ -21,12 +21,6 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
-  CREATE TABLE IF NOT EXISTS sessions (
-    token TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
   CREATE TABLE IF NOT EXISTS plugins (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
