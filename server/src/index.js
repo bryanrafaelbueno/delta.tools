@@ -3,9 +3,6 @@ import { authRouter } from './routes/auth.js';
 import { pluginsRouter } from './routes/plugins.js';
 import { favoritesRouter } from './routes/favorites.js';
 import { adminRouter } from './routes/admin.js';
-import { seed } from './seed.js';
-
-seed();
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
