@@ -9,30 +9,25 @@ const { chromium } = require('playwright');
     if (m.type() === 'error') errors.push('CONSOLE: ' + m.text());
   });
 
-  // 1. Dashboard loads with tools
+  // 1. Dashboard loads with logo + search hero
   await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' });
-  await page.waitForSelector('.tool-card', { timeout: 15000 });
-  const toolCount = await page.locator('.tool-card').count();
-  console.log('PASS dashboard tools:', toolCount);
+  await page.waitForSelector('#hero-search-input', { timeout: 15000 });
+  console.log('PASS dashboard hero (logo + search)');
 
   // sidebar labels
   const sidebarText = await page.locator('.sidebar').innerText();
-  for (const label of ['Dashboard', 'Marketplace', 'Your tools', 'Theme', 'Settings']) {
+  for (const label of ['Dashboard', 'Marketplace', 'Favorite Tools', 'Theme', 'Settings']) {
     if (!sidebarText.includes(label)) throw new Error('missing sidebar label: ' + label);
   }
   console.log('PASS sidebar labels');
 
-  // 2. Search
-  await page.fill('#global-search', 'png to jpeg');
-  await page.waitForTimeout(300);
-  const filtered = await page.locator('.tool-card').count();
-  console.log('PASS search filtered count:', filtered);
+  // 2. Search navigates to the matching tool
+  await page.fill('#hero-search-input', 'png to jpeg');
+  await page.press('#hero-search-input', 'Enter');
+  await page.waitForSelector('#dropzone', { timeout: 15000 });
+  console.log('PASS search navigated to PNG to JPEG');
 
-  // 3. Open a tool, convert an image
-  await page.fill('#global-search', '');
-  await page.click('[data-tool-id="img-png-jpg"]');
-  await page.waitForSelector('#dropzone');
-  // generate a PNG in the browser and convert
+  // 3. Convert an image
   await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 64; canvas.height = 64;
@@ -113,7 +108,7 @@ const { chromium } = require('playwright');
   console.log('PASS publish plugin to marketplace');
 
   // 10. Theme toggle
-  await page.click('#btn-theme');
+  await page.click('[data-action="theme"]');
   const theme = await page.evaluate(() => document.documentElement.dataset.theme);
   console.log('PASS theme toggle:', theme);
 
