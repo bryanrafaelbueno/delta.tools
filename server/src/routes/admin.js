@@ -22,6 +22,7 @@ function rowToPlugin(row) {
     outputs: JSON.parse(row.outputs),
     entry: row.entry,
     downloads: row.downloads,
+    iconColor: row.icon_color || undefined,
     status: row.status,
     created_at: row.created_at,
   };

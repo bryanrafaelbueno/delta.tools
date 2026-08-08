@@ -28,6 +28,7 @@ db.exec(`
     description TEXT NOT NULL,
     author TEXT NOT NULL,
     icon TEXT NOT NULL DEFAULT '🧩',
+    icon_color TEXT,
     inputs TEXT NOT NULL,
     outputs TEXT NOT NULL,
     entry TEXT NOT NULL,
@@ -57,4 +58,7 @@ if (!pluginCols.includes('reviewed_at')) {
 }
 if (!pluginCols.includes('reviewed_by')) {
   db.exec(`ALTER TABLE plugins ADD COLUMN reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL`);
+}
+if (!pluginCols.includes('icon_color')) {
+  db.exec(`ALTER TABLE plugins ADD COLUMN icon_color TEXT`);
 }

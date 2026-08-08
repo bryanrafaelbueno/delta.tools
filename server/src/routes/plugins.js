@@ -16,6 +16,7 @@ function rowToPlugin(row) {
     outputs: JSON.parse(row.outputs),
     entry: row.entry,
     downloads: row.downloads,
+    iconColor: row.icon_color || undefined,
     status: row.status,
     created_at: row.created_at,
   };
@@ -41,7 +42,7 @@ pluginsRouter.post('/', (req, res) => {
   const user = userFromToken(req.headers.authorization?.replace(/^Bearer /, ''));
   if (!user) return res.status(401).json({ error: 'Sign in to publish plugins' });
 
-  const { id, name, version, description, icon, inputs, outputs, entry, _delete } = req.body ?? {};
+  const { id, name, version, description, icon, iconColor, inputs, outputs, entry, _delete } = req.body ?? {};
 
   if (_delete) {
     const existing = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
@@ -61,16 +62,16 @@ pluginsRouter.post('/', (req, res) => {
     }
     // Updates go back to moderation
     db.prepare(
-      `UPDATE plugins SET name=?, version=?, description=?, icon=?, inputs=?, outputs=?, entry=?, status='pending', reviewed_at=NULL, reviewed_by=NULL WHERE id=?`,
-    ).run(name, version, description, icon ?? '🧩', JSON.stringify(inputs), JSON.stringify(outputs), entry, id);
+      `UPDATE plugins SET name=?, version=?, description=?, icon=?, icon_color=?, inputs=?, outputs=?, entry=?, status='pending', reviewed_at=NULL, reviewed_by=NULL WHERE id=?`,
+    ).run(name, version, description, icon ?? '🧩', iconColor ?? null, JSON.stringify(inputs), JSON.stringify(outputs), entry, id);
     const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
     return res.json({ plugin: rowToPlugin(row) });
   }
 
   db.prepare(
-    `INSERT INTO plugins (id, name, version, description, author, icon, inputs, outputs, entry, status, author_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
-  ).run(id, name, version, description, user.username, icon ?? '🧩', JSON.stringify(inputs), JSON.stringify(outputs), entry, user.id);
+    `INSERT INTO plugins (id, name, version, description, author, icon, icon_color, inputs, outputs, entry, status, author_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+  ).run(id, name, version, description, user.username, icon ?? '🧩', iconColor ?? null, JSON.stringify(inputs), JSON.stringify(outputs), entry, user.id);
   const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
   res.status(201).json({ plugin: rowToPlugin(row) });
 });
