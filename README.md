@@ -17,32 +17,32 @@
   <img src="https://img.shields.io/badge/platform-web-lightgrey"/>
 </p>
 
-## ✨ What is Delta.tools?
+## What is Delta.tools?
 
 **Delta.tools** is a file conversion platform that runs 100% in your browser.
 
 Every conversion happens client-side — your files never leave your machine. No uploads, no servers peeking at your data, no waiting for an external service.
 
-💡 Ideal for anyone who wants a free, private, and ad-free alternative to online converters.
+Ideal for anyone who wants a free, private, and ad-free alternative to online converters.
 
 ---
 
-## 🚀 Features
+## Features
 
-- 🔒 100% in-browser conversions — files never leave your machine
-- 🖼️ Images — PNG, JPG, WEBP, BMP, ICO, AVIF, GIF
-- 🎵 Audio — MP3, WAV, OGG, FLAC, AAC, M4A, OPUS
-- 🎬 Video — MP4, WebM, MOV, MKV, AVI + GIF export + audio extraction
-- 📄 Documents — PDF → images, images → PDF, PDF merge, PDF compress
-- 🗜️ Archives — ZIP, TAR, GZ conversions
-- 📝 Text — JSON pretty, CSV ⇄ JSON, base64 decode
-- 🧩 Sandboxed plugin marketplace — install community converters in one click
-- ⭐ Account favorites — star your tools and keep them synced (JWT auth)
-- 🌙 Dark, minimal UI — minimal and perfect
+- 100% in-browser conversions — files never leave your machine
+- Images — PNG, JPG, WEBP, BMP, ICO, AVIF, GIF
+- Audio — MP3, WAV, OGG, FLAC, AAC, M4A, OPUS
+- Video — MP4, WebM, MOV, MKV, AVI + GIF export + audio extraction
+- Documents — PDF → images, images → PDF, PDF merge, PDF compress
+- Archives — ZIP, TAR, GZ conversions
+- Text — JSON pretty, CSV ⇄ JSON, base64 decode
+- Sandboxed plugin marketplace — install community converters in one click
+- Account favorites — star your tools and keep them synced (JWT auth)
+- Dark, minimal UI — minimal and perfect
 
 ---
 
-## 🧠 How it works
+## How it works
 
 ```
 You pick a file
@@ -58,7 +58,7 @@ Nothing was ever uploaded
 
 ---
 
-## 📁 Project structure
+## Project structure
 
 ```
 delta.tools/
@@ -78,7 +78,7 @@ delta.tools/
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### 1. Setup Environment
 
@@ -110,8 +110,8 @@ npm run dev
 
 | Service | URL |
 | --- | --- |
-| 🌐 Web app | http://localhost:5173 |
-| ⚙️ API server | http://localhost:3001 |
+| Web app | http://localhost:5173 |
+| API server | http://localhost:3001 |
 
 ### Production
 
@@ -128,7 +128,7 @@ npm start        # serves the built web app + API on :3001
 
 ---
 
-## 🖥️ Interface
+## Interface
 
 Run `npm run dev` and open http://localhost:5173 — the dashboard is a clean
 centered search over 136 built-in converters, with favorites and the plugin
@@ -136,7 +136,7 @@ marketplace one click away.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Authentication (JWT)
 
@@ -160,7 +160,7 @@ production server send `COOP: same-origin` and `COEP: require-corp` headers.
 
 ---
 
-## 🧩 Plugin development
+## Plugin development
 
 Plugins run in a **sandboxed iframe** (`sandbox="allow-scripts"` only): opaque
 origin, no network, no cookies, no access to the parent page. Files move
@@ -172,7 +172,7 @@ plus example plugins seeded into the marketplace (`server/src/seed.js`).
 
 ---
 
-## 🛠️ CLI
+## CLI
 
 ```bash
 npm run dev        # start web + API with hot reload
@@ -182,7 +182,7 @@ npm start          # serve production build + API on :3001
 
 ---
 
-## 🧱 Stack
+## Stack
 
 * Frontend: TypeScript + Vite
 * Converters: Canvas, ffmpeg.wasm, pdf-lib, pdfjs-dist, fflate
@@ -192,7 +192,7 @@ npm start          # serve production build + API on :3001
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -202,7 +202,7 @@ npm start          # serve production build + API on :3001
 
 ---
 
-## 🛠️ Developer Guide & Portability
+## Developer Guide & Portability
 
 ### 1. Core Prerequisites
 
@@ -221,7 +221,7 @@ If you are running the API server, SQLite is built into Node 20+.
 
 ---
 
-## 🏗️ Quick Setup Checklist
+## Quick Setup Checklist
 
 1. **Verify Environment**: `node --version` (must be 20+)
 2. **Install Dependencies**: `npm install`
@@ -231,7 +231,7 @@ If you are running the API server, SQLite is built into Node 20+.
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 All test suites live in the repository and run exactly as CI does:
 
@@ -247,13 +247,13 @@ browsing, plugin install, auth, and theme toggling. See
 
 ---
 
-## 📄 License
+## License
 
 MIT © 2026 [Bryan Rafael](https://github.com/bryanrafaelbueno)
 
 ---
 
-## ☕ Support the project
+## Support the project
 If this project helps you, consider supporting development: </br>
 <a href="https://www.buymeacoffee.com/bryanrafaelbueno" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a> </br>
 

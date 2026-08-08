@@ -146,7 +146,7 @@ export function openIconPicker(current?: PickedIcon): Promise<PickedIcon | null>
           (i) => `
           <button class="ip-item ${i.custom ? 'ip-custom' : ''} ${selected?.id === i.id ? 'selected' : ''}" data-key="${i.id}" title="${i.title}">
             <span class="svg-icon" data-src="${iconUrl(i)}"></span>
-            ${i.custom ? '<span class="ip-custom-x">✕</span>' : ''}
+            ${i.custom ? '<span class="ip-custom-x">&#10005;</span>' : ''}
           </button>`,
         )
         .join('');
