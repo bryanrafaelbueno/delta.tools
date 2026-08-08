@@ -28,7 +28,7 @@ export function renderProfile(): HTMLElement {
       <div class="page-sub">Your Delta.tools account.</div>
     </div>
     <div class="panel" style="max-width:520px;display:flex;gap:18px;align-items:center">
-      <div class="avatar" style="width:56px;height:56px;font-size:22px;border-radius:14px;background:var(--accent-soft);color:var(--accent-hover);display:flex;align-items:center;justify-content:center;font-weight:700">${user.username[0].toUpperCase()}</div>
+      <div class="avatar" style="width:56px;height:56px;font-size:22px;border-radius:14px;background:var(--hover-strong);color:var(--text);display:flex;align-items:center;justify-content:center;font-weight:700">${user.username[0].toUpperCase()}</div>
       <div>
         <div style="font-size:17px;font-weight:700">${user.username}</div>
         <div style="color:var(--text-muted);font-size:12.5px">${user.role} · member since ${new Date(user.created_at).toLocaleDateString()}</div>

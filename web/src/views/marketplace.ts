@@ -4,6 +4,7 @@ import { pluginManager } from '../plugins/manager';
 import type { MarketplacePlugin } from '../types';
 import { toast } from '../ui/toast';
 import { state } from '../state';
+import { logo } from '../ui/icons';
 
 export function renderMarketplace(): HTMLElement {
   const el = document.createElement('div');
@@ -13,16 +14,17 @@ export function renderMarketplace(): HTMLElement {
   el.style.gap = '16px';
 
   el.innerHTML = `
-    <div>
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:18px 0 8px">
+      <div class="hero-logo">${logo()}<span class="hero-title">Delta.tools</span></div>
       <div class="page-title">Marketplace</div>
       <div class="page-sub">Community-made converters, installed in one click. Every plugin runs sandboxed in your browser.</div>
     </div>
-    <div class="panel" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button class="btn btn-ghost" id="btn-json">Install from JSON</button>
-      <button class="btn btn-primary" id="btn-publish" ${state.token ? '' : 'disabled'}>${state.token ? 'Publish a plugin' : 'Sign in to publish'}</button>
-      <span style="color:var(--text-muted);font-size:12.5px">${state.token ? '' : 'You need an account to publish plugins.'}</span>
-    </div>
     <div class="panel">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn btn-ghost" id="btn-json">Install from JSON</button>
+        <button class="btn btn-primary" id="btn-publish" ${state.token ? '' : 'disabled'}>${state.token ? 'Publish a plugin' : 'Sign in to publish'}</button>
+        <span style="color:var(--text-muted);font-size:12.5px">${state.token ? '' : 'You need an account to publish plugins.'}</span>
+      </div>
       <div class="plugin-grid" id="plugin-grid"><div class="empty">Loading marketplace…</div></div>
     </div>
   `;
