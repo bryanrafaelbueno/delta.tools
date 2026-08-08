@@ -47,7 +47,11 @@ async function runFfmpeg(job: Job): Promise<Uint8Array> {
     job.onProgress?.(progress);
   };
   const handler = (e: { progress: number }): void => onProgress(e.progress);
+  const logHandler = (e: { message: string }): void => {
+    console.debug('[ffmpeg]', e.message);
+  };
   ffmpeg.on('progress', handler);
+  ffmpeg.on('log', logHandler);
   try {
     await ffmpeg.writeFile(job.inputName, new Uint8Array(job.data));
     await ffmpeg.exec(job.args);
@@ -57,6 +61,7 @@ async function runFfmpeg(job: Job): Promise<Uint8Array> {
     return out as Uint8Array;
   } finally {
     ffmpeg.off('progress', handler);
+    ffmpeg.off('log', logHandler);
   }
 }
 
