@@ -5,6 +5,9 @@ import type { MarketplacePlugin } from '../types';
 import { toast } from '../ui/toast';
 import { state } from '../state';
 import { logo } from '../ui/icons';
+import { openIconPicker, type PickedIcon } from '../ui/iconpicker';
+import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
+import { svgIcons } from '../ui/svg-icons';
 
 export function renderMarketplace(): HTMLElement {
   const el = document.createElement('div');
@@ -61,13 +64,14 @@ export function renderMarketplace(): HTMLElement {
             pluginManager.activate(plugin);
             api.installPlugin(id).catch(() => undefined);
             toast(`Installed "${plugin.name}"`, 'success');
-            btn.innerHTML = '✓ Installed';
+            btn.innerHTML = 'Installed';
             (btn as HTMLButtonElement).disabled = true;
           } catch (err) {
             toast(err instanceof Error ? err.message : 'Install failed', 'error');
           }
         });
       });
+      hydrateSvgIconsAsync(grid);
       grid.querySelectorAll('[data-open-plugin]').forEach((card) => {
         card.addEventListener('click', () => {
           window.location.hash = `/plugin/${card.getAttribute('data-open-plugin')}`;
@@ -85,7 +89,7 @@ function pluginCard(p: MarketplacePlugin, isInstalled: boolean): string {
   return `
     <div class="plugin-card" data-open-plugin="${p.id}">
       <div class="head">
-        <div class="picon">${p.icon || '🧩'}</div>
+        <div class="picon">${renderIcon(p.icon || svgIcons.plugin, p.iconColor, 22)}</div>
         <div>
           <div class="pname">${p.name}</div>
           <div class="pauthor">by ${p.author} · v${p.version}</div>
@@ -94,7 +98,7 @@ function pluginCard(p: MarketplacePlugin, isInstalled: boolean): string {
       <div class="pdesc">${p.description}</div>
       <div class="pfooter">
         <div class="pstats">${p.inputs.map((i) => i.toUpperCase()).join(', ')} → ${p.outputs.map((o) => o.toUpperCase()).join(', ')} · ${p.downloads ?? 0} installs</div>
-        <button class="btn btn-primary" data-install="${p.id}" style="padding:5px 12px;font-size:12px" ${isInstalled ? 'disabled' : ''}>${isInstalled ? '✓ Installed' : 'Install'}</button>
+        <button class="btn btn-primary" data-install="${p.id}" style="padding:5px 12px;font-size:12px" ${isInstalled ? 'disabled' : ''}>${isInstalled ? 'Installed' : 'Install'}</button>
       </div>
     </div>
   `;
@@ -130,7 +134,14 @@ function publishModal(): void {
       </div>
       <div class="form-row">
         <div class="form-field"><label>Version</label><input id="p-version" value="1.0.0"/></div>
-        <div class="form-field"><label>Icon (emoji)</label><input id="p-icon" value="🧩"/></div>
+        <div class="form-field">
+          <label>Icon</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="p-icon-preview" class="picon" style="width:38px;height:38px;background:var(--hover);border-radius:8px;display:flex;align-items:center;justify-content:center"><img src="${svgIcons.plugin}" width="22" height="22"/></div>
+            <button class="btn btn-ghost" id="p-icon-btn" type="button" style="padding:6px 12px;font-size:12px">Choose icon…</button>
+            <button class="btn btn-ghost" id="p-icon-clear" type="button" style="padding:6px 12px;font-size:12px;display:none">Reset</button>
+          </div>
+        </div>
       </div>
       <div class="form-field"><label>Description</label><input id="p-desc" placeholder="What does it convert?"/></div>
       <div class="form-row">
@@ -147,7 +158,25 @@ function publishModal(): void {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.remove();
   });
-  overlay.querySelector('[data-close]')!.addEventListener('click', () => overlay.remove());
+  overlay.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => overlay.remove()));
+
+  let picked: PickedIcon | null = null;
+  const preview = overlay.querySelector('#p-icon-preview') as HTMLElement;
+  const clearBtn = overlay.querySelector('#p-icon-clear') as HTMLButtonElement;
+  overlay.querySelector('#p-icon-btn')!.addEventListener('click', async () => {
+    const res = await openIconPicker(picked ?? undefined);
+    if (!res) return;
+    picked = res;
+    preview.innerHTML = renderIcon(res.url, res.color, 22);
+    hydrateSvgIconsAsync(preview);
+    clearBtn.style.display = '';
+  });
+  clearBtn.addEventListener('click', () => {
+    picked = null;
+    preview.innerHTML = `<img class="svg-icon" src="${svgIcons.plugin}" width="22" height="22"/>`;
+    clearBtn.style.display = 'none';
+  });
+
   overlay.querySelector('#p-submit')!.addEventListener('click', async () => {
     const inputs = (overlay.querySelector('#p-inputs') as HTMLInputElement).value
       .split(',')
@@ -162,14 +191,15 @@ function publishModal(): void {
       name: (overlay.querySelector('#p-name') as HTMLInputElement).value.trim(),
       version: (overlay.querySelector('#p-version') as HTMLInputElement).value.trim(),
       description: (overlay.querySelector('#p-desc') as HTMLInputElement).value.trim(),
-      icon: (overlay.querySelector('#p-icon') as HTMLInputElement).value.trim() || '🧩',
+      icon: picked?.url ?? svgIcons.plugin,
+      iconColor: picked?.color,
       inputs,
       outputs,
       entry: (overlay.querySelector('#p-entry') as HTMLTextAreaElement).value,
     };
     try {
       await api.publishPlugin(manifest);
-      toast('Plugin published to the marketplace!', 'success');
+      toast('Plugin submitted to moderation!', 'success');
       overlay.remove();
       window.location.hash = '/settings';
       setTimeout(() => (window.location.hash = '/marketplace'), 30);
