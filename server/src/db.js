@@ -41,4 +41,11 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     author_id INTEGER REFERENCES users(id) ON DELETE SET NULL
   );
+
+  CREATE TABLE IF NOT EXISTS favorites (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tool_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, tool_id)
+  );
 `);
