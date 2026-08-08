@@ -57,6 +57,10 @@
   color: #ffd166;
 }
 
+.fav-btn.fav-on svg path {
+  fill: currentColor;
+}
+
 .fav-btn svg {
   width: 15px;
   height: 15px;

@@ -143,6 +143,10 @@
   color: #ffd166;
 }
 
+.fav-toggle.fav-on svg path {
+  fill: currentColor;
+}
+
 .fav-toggle svg {
   width: 16px;
   height: 16px;
