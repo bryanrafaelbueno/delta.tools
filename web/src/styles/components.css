@@ -237,6 +237,37 @@
   line-height: 1.5;
 }
 
+/* Install-from-JSON modal */
+#ij-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+#ij-input:focus {
+  border-color: var(--accent);
+}
+
+.ij-error {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .converter-row {
   display: flex;
   align-items: center;
@@ -855,6 +886,23 @@ span.svg-icon img {
   color: var(--text-muted);
   padding: 40px 20px;
   font-size: 13px;
+}
+
+/* Marketplace with no plugins: center the toolbar and the empty message */
+.panel.marketplace-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 20px;
+}
+
+.panel.marketplace-empty > div:first-child {
+  justify-content: center;
+}
+
+.panel.marketplace-empty .empty {
+  padding: 8px 0 0;
 }
 
 /* Segment filter */

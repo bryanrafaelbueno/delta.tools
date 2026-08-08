@@ -4,7 +4,6 @@ import { pluginManager } from '../plugins/manager';
 import type { MarketplacePlugin } from '../types';
 import { toast } from '../ui/toast';
 import { state } from '../state';
-import { logo } from '../ui/icons';
 import { openIconPicker, type PickedIcon } from '../ui/iconpicker';
 import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
 import { svgIcons } from '../ui/svg-icons';
@@ -17,13 +16,12 @@ export function renderMarketplace(): HTMLElement {
   el.style.gap = '16px';
 
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:18px 0 8px">
-      <div class="hero-logo">${logo()}<span class="hero-title">Delta.tools</span></div>
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:10px 0 8px">
       <div class="page-title">Marketplace</div>
       <div class="page-sub">Community-made converters, installed in one click. Every plugin runs sandboxed in your browser.</div>
     </div>
-    <div class="panel">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+    <div class="panel" style="align-items:center;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
         <button class="btn btn-ghost" id="btn-json">Install from JSON</button>
         <button class="btn btn-primary" id="btn-publish" ${state.token ? '' : 'disabled'}>${state.token ? 'Publish a plugin' : 'Sign in to publish'}</button>
         <span style="color:var(--text-muted);font-size:12.5px">${state.token ? '' : 'You need an account to publish plugins.'}</span>
@@ -49,7 +47,13 @@ export function renderMarketplace(): HTMLElement {
     .then(async (res) => {
       const plugins = res.plugins as MarketplacePlugin[];
       if (plugins.length === 0) {
-        grid.innerHTML = `<div class="empty">The marketplace is empty. Be the first to publish a plugin!</div>`;
+        const panel = el.querySelector('.panel') as HTMLElement;
+        panel.classList.add('marketplace-empty');
+        grid.style.display = 'none';
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'The marketplace is empty. Be the first to publish a plugin!';
+        panel.appendChild(empty);
         return;
       }
       const installed = new Set((await pluginStore.list()).map((p) => p.id));
@@ -105,20 +109,75 @@ function pluginCard(p: MarketplacePlugin, isInstalled: boolean): string {
 }
 
 function installFromJson(): void {
-  const text = prompt('Paste the plugin JSON manifest (with "entry" code):');
-  if (!text) return;
-  try {
-    const manifest = JSON.parse(text);
-    pluginStore
-      .install(manifest)
-      .then((m) => {
-        pluginManager.activate(m);
-        toast(`Installed "${m.name}"`, 'success');
-      })
-      .catch((err) => toast(err instanceof Error ? err.message : 'Invalid manifest', 'error'));
-  } catch {
-    toast('Invalid JSON', 'error');
-  }
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="width:min(560px,calc(100vw - 40px))">
+      <div style="display:flex;align-items:center;gap:10px">
+        <h2>Install from JSON</h2>
+        <span style="flex:1"></span>
+        <button class="icon-btn" data-close style="color:var(--text-muted)">&#10005;</button>
+      </div>
+      <div class="page-sub" style="font-size:12.5px;color:var(--text-muted)">Paste a plugin manifest (with the <code>entry</code> code). See <a href="https://github.com/bryanrafaelbueno/delta.tools/blob/main/docs/PLUGIN_API.md" target="_blank">docs/PLUGIN_API.md</a>.</div>
+      <div class="form-field" style="margin-top:14px">
+        <label>Plugin JSON</label>
+        <textarea id="ij-input" rows="14" spellcheck="false" placeholder='{ "id": "com.example.tool", "name": "My Tool", … "entry": "return { convert: async (input) => { … } }" }' style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;resize:vertical"></textarea>
+        <div class="ij-error" id="ij-error" style="display:none"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-close>Cancel</button>
+        <button class="btn btn-primary" id="ij-install" disabled>Install</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const input = overlay.querySelector('#ij-input') as HTMLTextAreaElement;
+  const errorEl = overlay.querySelector('#ij-error') as HTMLElement;
+  const installBtn = overlay.querySelector('#ij-install') as HTMLButtonElement;
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+  overlay.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => overlay.remove()));
+
+  let manifest: unknown = null;
+  const update = (): void => {
+    errorEl.style.display = 'none';
+    const text = input.value.trim();
+    if (!text) {
+      manifest = null;
+      installBtn.disabled = true;
+      return;
+    }
+    try {
+      manifest = JSON.parse(text);
+      installBtn.disabled = false;
+    } catch (err) {
+      manifest = null;
+      installBtn.disabled = true;
+      errorEl.style.display = 'block';
+      errorEl.textContent = `Invalid JSON: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  };
+  input.addEventListener('input', update);
+
+  installBtn.addEventListener('click', async () => {
+    if (!manifest) return;
+    installBtn.disabled = true;
+    try {
+      const m = await pluginStore.install(manifest);
+      pluginManager.activate(m);
+      toast(`Installed "${m.name}"`, 'success');
+      overlay.remove();
+    } catch (err) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = err instanceof Error ? err.message : 'Invalid manifest';
+      installBtn.disabled = false;
+    }
+  });
+
+  update();
 }
 
 function publishModal(): void {
