@@ -27,7 +27,7 @@ db.exec(`
     version TEXT NOT NULL,
     description TEXT NOT NULL,
     author TEXT NOT NULL,
-    icon TEXT NOT NULL DEFAULT '🧩',
+    icon TEXT NOT NULL DEFAULT 'https://api.iconify.design/mdi/puzzle.svg?color=%2300d4aa',
     icon_color TEXT,
     inputs TEXT NOT NULL,
     outputs TEXT NOT NULL,

@@ -16,7 +16,8 @@ marketplace) it looks like:
   "version": "1.0.0",
   "description": "Converts PNG images to JPEG",
   "author": "author_username",
-  "icon": "🖼️",
+  "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTguNSAxMy41bDIuNSAzIDMuNS00LjUgNC41IDZINW0xOC04VjVhMiAyIDAgMCAwLTItMkg1YTIgMiAwIDAgMC0yIDJ2MTRhMiAyIDAgMCAwIDIgMmgxNGEyIDIgMCAwIDAgMi0yeiIvPjwvc3ZnPg==",
+  "iconColor": "#38bdf8",
   "inputs": ["png"],
   "outputs": ["jpeg"],
   "entry": "return { convert: async (input) => { ... } }"
@@ -24,8 +25,18 @@ marketplace) it looks like:
 ```
 
 - `id` — unique reverse-domain identifier
+- `icon` — optional; an inline SVG as a `data:image/svg+xml;base64,…` data
+  URI (embed your own SVG, no external service needed). Omitting it falls
+  back to the default puzzle icon.
+- `iconColor` — optional; when set, the icon is re-tinted to that color.
 - `inputs` / `outputs` — file extensions (without the dot)
 - `entry` — the plugin source code (see below)
+
+To embed your own SVG icon, inline the file and base64-encode it:
+
+```js
+// node -e "console.log('data:image/svg+xml;base64,' + Buffer.from(fs.readFileSync('icon.svg')).toString('base64'))"
+```
 
 ## Authoring a converter
 

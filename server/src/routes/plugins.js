@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { db } from '../db.js';
 import { userFromToken } from '../auth.js';
 
+const DEFAULT_ICON = 'https://api.iconify.design/mdi/puzzle.svg?color=%2300d4aa';
+
 export const pluginsRouter = Router();
 
 function rowToPlugin(row) {
@@ -63,7 +65,7 @@ pluginsRouter.post('/', (req, res) => {
     // Updates go back to moderation
     db.prepare(
       `UPDATE plugins SET name=?, version=?, description=?, icon=?, icon_color=?, inputs=?, outputs=?, entry=?, status='pending', reviewed_at=NULL, reviewed_by=NULL WHERE id=?`,
-    ).run(name, version, description, icon ?? '🧩', iconColor ?? null, JSON.stringify(inputs), JSON.stringify(outputs), entry, id);
+    ).run(name, version, description, icon ?? DEFAULT_ICON, iconColor ?? null, JSON.stringify(inputs), JSON.stringify(outputs), entry, id);
     const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
     return res.json({ plugin: rowToPlugin(row) });
   }
@@ -71,7 +73,7 @@ pluginsRouter.post('/', (req, res) => {
   db.prepare(
     `INSERT INTO plugins (id, name, version, description, author, icon, icon_color, inputs, outputs, entry, status, author_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
-  ).run(id, name, version, description, user.username, icon ?? '🧩', iconColor ?? null, JSON.stringify(inputs), JSON.stringify(outputs), entry, user.id);
+  ).run(id, name, version, description, user.username, icon ?? DEFAULT_ICON, iconColor ?? null, JSON.stringify(inputs), JSON.stringify(outputs), entry, user.id);
   const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
   res.status(201).json({ plugin: rowToPlugin(row) });
 });
