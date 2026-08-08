@@ -17,7 +17,7 @@ export function renderSettings(): HTMLElement {
       <div class="setting-row">
         <div>
           <div class="s-title">Dark theme</div>
-          <div class="s-desc">Fits the Delta look. Files never leave this device either way.</div>
+          <div class="s-desc">Fits the Delta look, but you can change if you are boring.</div>
         </div>
         <button class="toggle ${state.theme === 'dark' ? 'on' : ''}" id="toggle-theme" role="switch"></button>
       </div>
