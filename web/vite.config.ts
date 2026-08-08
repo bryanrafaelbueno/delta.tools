@@ -3,6 +3,10 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   server: {
     port: 5173,
+    // The backend answers CORS itself (the plugin sandbox is an opaque origin
+    // and needs ACAO/CORP headers). Disable Vite's own CORS so it doesn't
+    // intercept preflight OPTIONS requests.
+    cors: false,
     proxy: {
       '/api': 'http://localhost:3001',
     },
