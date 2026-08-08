@@ -270,6 +270,7 @@ export function renderTool(id: string): HTMLElement {
     const grid = panel.querySelector('.tool-grid')!;
     grid.innerHTML = related.map((c) => toolCard(c.def)).join('');
     bindToolCards(panel);
+    hydrateSvgIconsAsync(panel);
     el.appendChild(panel);
   }
 

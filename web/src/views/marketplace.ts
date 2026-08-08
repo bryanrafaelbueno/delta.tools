@@ -137,7 +137,7 @@ function publishModal(): void {
         <div class="form-field">
           <label>Icon</label>
           <div style="display:flex;align-items:center;gap:10px">
-            <div id="p-icon-preview" class="picon" style="width:38px;height:38px;background:var(--hover);border-radius:8px;display:flex;align-items:center;justify-content:center"><img src="${svgIcons.plugin}" width="22" height="22"/></div>
+            <div id="p-icon-preview" class="picon" style="width:38px;height:38px;background:var(--hover);border-radius:8px;display:flex;align-items:center;justify-content:center"><span class="svg-icon" data-src="${svgIcons.plugin}" style="width:22px;height:22px"></span></div>
             <button class="btn btn-ghost" id="p-icon-btn" type="button" style="padding:6px 12px;font-size:12px">Choose icon…</button>
             <button class="btn btn-ghost" id="p-icon-clear" type="button" style="padding:6px 12px;font-size:12px;display:none">Reset</button>
           </div>
@@ -159,6 +159,7 @@ function publishModal(): void {
     if (e.target === overlay) overlay.remove();
   });
   overlay.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => overlay.remove()));
+  hydrateSvgIconsAsync(overlay);
 
   let picked: PickedIcon | null = null;
   const preview = overlay.querySelector('#p-icon-preview') as HTMLElement;
@@ -173,7 +174,8 @@ function publishModal(): void {
   });
   clearBtn.addEventListener('click', () => {
     picked = null;
-    preview.innerHTML = `<img class="svg-icon" src="${svgIcons.plugin}" width="22" height="22"/>`;
+    preview.innerHTML = `<span class="svg-icon" data-src="${svgIcons.plugin}" style="width:22px;height:22px"></span>`;
+    hydrateSvgIconsAsync(preview);
     clearBtn.style.display = 'none';
   });
 

@@ -13,7 +13,7 @@ mkdirSync(cacheDir, { recursive: true });
 
 const mem = new Map(); // url -> { at, body, type }
 const TTL = 60 * 60 * 1000;
-const ALLOWED_HOSTS = new Set(['api.svgl.app', 'svgl.app', 'thesvg.org', 'cdn.jsdelivr.net']);
+const ALLOWED_HOSTS = new Set(['api.svgl.app', 'svgl.app', 'thesvg.org', 'cdn.jsdelivr.net', 'api.iconify.design']);
 
 function diskPath(url) {
   const name = Buffer.from(url).toString('base64url').slice(0, 120);

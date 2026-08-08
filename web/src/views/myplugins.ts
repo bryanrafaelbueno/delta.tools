@@ -23,13 +23,15 @@ export function renderMyPlugins(tab: 'favorites' | 'manage' = 'favorites'): HTML
       <div class="page-sub">Your starred tools and the plugins you've installed.</div>
     </div>
     <div class="segment" id="mp-tabs">
-      <button data-tab="favorites" class="${tab === 'favorites' ? 'active' : ''}"><img src="${svgIcons.image}" width="14" height="14"/> Favorite Tools</button>
-      <button data-tab="manage" class="${tab === 'manage' ? 'active' : ''}"><img src="${svgIcons.plugin}" width="14" height="14"/> Manage plugins</button>
+      <button data-tab="favorites" class="${tab === 'favorites' ? 'active' : ''}"><span class="tab-icon">${renderIcon(svgIcons.image, undefined, 14)}</span> Favorite Tools</button>
+      <button data-tab="manage" class="${tab === 'manage' ? 'active' : ''}"><span class="tab-icon">${renderIcon(svgIcons.plugin, undefined, 14)}</span> Manage plugins</button>
     </div>
     <div class="panel" id="mp-body">
       <div class="empty">Loading…</div>
     </div>
   `;
+
+  hydrateSvgIconsAsync(el);
 
   const body = el.querySelector('#mp-body') as HTMLElement;
   const tabs = el.querySelector('#mp-tabs')!;
