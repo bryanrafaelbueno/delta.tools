@@ -56,6 +56,7 @@ export function renderMarketplace(): HTMLElement {
           try {
             await pluginStore.install(plugin);
             pluginManager.activate(plugin);
+            api.installPlugin(id).catch(() => undefined);
             toast(`Installed "${plugin.name}"`, 'success');
             btn.innerHTML = '✓ Installed';
             (btn as HTMLButtonElement).disabled = true;

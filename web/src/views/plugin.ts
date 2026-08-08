@@ -61,6 +61,7 @@ export function renderPlugin(id: string): HTMLElement {
       try {
         await pluginStore.install(plugin!);
         pluginManager.activate(plugin!);
+        api.installPlugin(id).catch(() => undefined);
         toast(`Installed "${plugin!.name}"`, 'success');
         const btn = panel.querySelector('#install-btn') as HTMLButtonElement;
         btn.disabled = true;

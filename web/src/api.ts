@@ -35,6 +35,9 @@ export const api = {
 
   getPlugin: (id: string) => request<{ plugin: unknown }>(`/plugins/${encodeURIComponent(id)}`),
 
+  installPlugin: (id: string) =>
+    request<{ ok: boolean }>(`/plugins/${encodeURIComponent(id)}/install`, { method: 'POST' }),
+
   publishPlugin: (manifest: unknown) =>
     request<{ plugin: unknown }>('/plugins', {
       method: 'POST',
