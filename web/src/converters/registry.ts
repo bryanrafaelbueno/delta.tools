@@ -27,6 +27,10 @@ class Registry {
       (c) => c.def.from === from && c.def.to === to && (!category || c.def.category === category),
     );
   }
+
+  remove(id: string): void {
+    this.map.delete(id);
+  }
 }
 
 export const registry = new Registry();

@@ -10,7 +10,7 @@ export interface ConverterDef {
   pluginId?: string;
 }
 
-export type Category = 'image' | 'audio' | 'video' | 'document' | 'archive' | 'text';
+export type Category = 'image' | 'audio' | 'video' | 'document' | 'archive' | 'text' | 'other';
 
 export interface ConvertInput {
   name: string;
@@ -65,6 +65,7 @@ export const CATEGORIES: Record<Category, { label: string; icon: string }> = {
   document: { label: 'Document', icon: '📄' },
   archive: { label: 'Archive', icon: '🗜️' },
   text: { label: 'Text', icon: '📝' },
+  other: { label: 'Plugins', icon: '🧩' },
 };
 
 export function extOf(name: string): string {

@@ -1,8 +1,7 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { toBlobURL } from '@ffmpeg/util';
 import { registry } from './registry';
 import { toResult } from './helpers';
-import type { ConvertInput } from '../types';
 
 const CORE_URL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
 
@@ -18,15 +17,11 @@ export function getFfmpeg(): Promise<FFmpeg> {
     ffmpegPromise = (async () => {
       const ffmpeg = new FFmpeg();
       await ffmpeg.load({
-        coreURL: await toBlobURL(`${CORE_URL}/ffmpeg-core.js`, 'text/javascript', {
-          onProgress: (p) => {
-            loadProgress = p * 0.8;
-          },
+        coreURL: await toBlobURL(`${CORE_URL}/ffmpeg-core.js`, 'text/javascript', true, (e) => {
+          loadProgress = (e.total > 0 ? e.received / e.total : 0) * 0.8;
         }),
-        wasmURL: await toBlobURL(`${CORE_URL}/ffmpeg-core.wasm`, 'application/wasm', {
-          onProgress: (p) => {
-            loadProgress = 0.8 + p * 0.2;
-          },
+        wasmURL: await toBlobURL(`${CORE_URL}/ffmpeg-core.wasm`, 'application/wasm', true, (e) => {
+          loadProgress = 0.8 + (e.total > 0 ? e.received / e.total : 0) * 0.2;
         }),
       });
       return ffmpeg;
@@ -40,6 +35,7 @@ interface Job {
   inputName: string;
   outputName: string;
   args: string[];
+  data: ArrayBuffer;
   onProgress?: (p: number) => void;
 }
 
@@ -47,20 +43,20 @@ let jobId = 0;
 
 async function runFfmpeg(job: Job): Promise<Uint8Array> {
   const ffmpeg = await getFfmpeg();
-  let prog: number | null = null;
-  const unsub = ffmpeg.on('progress', ({ progress }) => {
-    prog = progress;
+  const onProgress = (progress: number): void => {
     job.onProgress?.(progress);
-  });
+  };
+  const handler = (e: { progress: number }): void => onProgress(e.progress);
+  ffmpeg.on('progress', handler);
   try {
-    await ffmpeg.writeFile(job.inputName, new Uint8Array(job.data as unknown as ArrayBuffer));
+    await ffmpeg.writeFile(job.inputName, new Uint8Array(job.data));
     await ffmpeg.exec(job.args);
     const out = await ffmpeg.readFile(job.outputName);
     await ffmpeg.deleteFile(job.inputName);
     await ffmpeg.deleteFile(job.outputName);
-    return out;
+    return out as Uint8Array;
   } finally {
-    unsub();
+    ffmpeg.off('progress', handler);
   }
 }
 
@@ -104,9 +100,10 @@ function registerAudioConverter(from: string, to: string): void {
         inputName: input.name,
         outputName: `out.${to}`,
         args: ['-i', input.name, '-vn', '-acodec', codecFor(to), '-y', `out.${to}`],
+        data: input.data,
         onProgress,
       });
-      return toResult(new Blob([out], { type: mimeFor(to) }), `${baseNoExt(input.name)}.${to}`);
+      return toResult(new Blob([out as BlobPart], { type: mimeFor(to) }), `${baseNoExt(input.name)}.${to}`);
     },
   );
 }
@@ -129,9 +126,10 @@ function registerVideoConverter(from: string, to: string): void {
         inputName: input.name,
         outputName: `out.${to}`,
         args: ['-i', input.name, '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', '-y', `out.${to}`],
+        data: input.data,
         onProgress,
       });
-      return toResult(new Blob([out], { type: mimeFor(to) }), `${baseNoExt(input.name)}.${to}`);
+      return toResult(new Blob([out as BlobPart], { type: mimeFor(to) }), `${baseNoExt(input.name)}.${to}`);
     },
   );
 }
@@ -154,9 +152,10 @@ function registerVideoToAudio(from: string): void {
         inputName: input.name,
         outputName: 'out.mp3',
         args: ['-i', input.name, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', '-y', 'out.mp3'],
+        data: input.data,
         onProgress,
       });
-      return toResult(new Blob([out], { type: 'audio/mpeg' }), `${baseNoExt(input.name)}.mp3`);
+      return toResult(new Blob([out as BlobPart], { type: 'audio/mpeg' }), `${baseNoExt(input.name)}.mp3`);
     },
   );
 }
@@ -179,9 +178,10 @@ function registerVideoToGif(from: string): void {
         inputName: input.name,
         outputName: 'out.gif',
         args: ['-i', input.name, '-vf', 'fps=12,scale=480:-1:flags=lanczos', '-y', 'out.gif'],
+        data: input.data,
         onProgress,
       });
-      return toResult(new Blob([out], { type: 'image/gif' }), `${baseNoExt(input.name)}.gif`);
+      return toResult(new Blob([out as BlobPart], { type: 'image/gif' }), `${baseNoExt(input.name)}.gif`);
     },
   );
 }

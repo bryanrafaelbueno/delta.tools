@@ -2,7 +2,6 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { registry } from './registry';
 import { toResult } from './helpers';
-import type { ConvertInput } from '../types';
 
 const PDFJS = (pdfjsLib as unknown as { GlobalWorkerOptions: { workerSrc: string } }).GlobalWorkerOptions;
 PDFJS.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
@@ -71,7 +70,7 @@ export function registerPdfConverters(): void {
       const bitmap = await createImageBitmap(new Blob([input.data], { type: input.type }));
       const pdf = await PDFDocument.create();
       const page = pdf.addPage([bitmap.width, bitmap.height]);
-      const png = await pdf.embedPng(input.data as Uint8Array);
+      const png = await pdf.embedPng(new Uint8Array(input.data));
       page.drawImage(png, { x: 0, y: 0, width: bitmap.width, height: bitmap.height });
       const bytes = await pdf.save();
       return { name: `${baseNoExt(input.name)}.pdf`, type: 'application/pdf', data: bytes.buffer as ArrayBuffer };
