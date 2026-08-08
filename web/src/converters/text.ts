@@ -93,7 +93,7 @@ export function registerTextConverters(): void {
     {
       id: 'txt-base64-decode',
       name: 'Base64 Decode',
-      description: 'Decode base64 text to a file',
+      description: 'Decode base64 to text (or a binary file when the result is not text)',
       category: 'text',
       from: 'txt',
       to: 'bin',
@@ -105,6 +105,24 @@ export function registerTextConverters(): void {
       const binary = atob(text);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      // Detect whether the decoded bytes are human-readable text. If they are,
+      // return a .txt result so the UI can show it inline instead of forcing a
+      // binary download.
+      let readable = binary.length > 0;
+      let utf8 = '';
+      try {
+        utf8 = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      } catch {
+        readable = false;
+      }
+      if (readable) {
+        const sample = utf8.slice(0, 4096);
+        // Reject control characters that don't belong in text.
+        readable = !/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(sample);
+      }
+      if (readable) {
+        return { name: `${baseNoExt(input.name)}-decoded.txt`, type: 'text/plain; charset=utf-8', data: bytes.buffer as ArrayBuffer };
+      }
       return { name: `${baseNoExt(input.name)}.decoded`, type: 'application/octet-stream', data: bytes.buffer as ArrayBuffer };
     },
   );
