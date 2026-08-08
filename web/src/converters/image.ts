@@ -20,7 +20,14 @@ export async function loadBitmap(input: ConvertInput): Promise<ImageBitmap> {
 export async function canvasToBlob(canvas: HTMLCanvasElement, mime: string, quality?: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error(`Encoding to ${mime} failed`))),
+      (b) => {
+        if (!b) return reject(new Error(`Encoding to ${mime} failed`));
+        // Some browsers silently fall back to PNG for unsupported mimes.
+        if (b.type && b.type !== mime && !(mime === 'image/jpeg' && b.type === 'image/jpg')) {
+          return reject(new Error(`Encoding to ${mime} failed (browser returned ${b.type})`));
+        }
+        resolve(b);
+      },
       mime,
       quality,
     );
@@ -35,7 +42,9 @@ function icon(ext: string): string {
 
 const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'ico', 'avif', 'gif'];
 const DECODABLE = [...IMAGE_EXTS];
-const ENCODABLE = ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'ico', 'avif'];
+// canvas.toBlob only actually encodes these; for bmp/ico/avif/gif it silently
+// returns a PNG (or null), so we must not advertise them as encodable.
+const ENCODABLE = ['png', 'jpg', 'jpeg', 'webp'];
 
 function registerImageConverter(from: string, to: string): void {
   registry.register(

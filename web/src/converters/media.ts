@@ -71,7 +71,10 @@ function icon(ext: string): string {
 }
 
 const AUDIO_EXTS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus'];
-const VIDEO_EXTS = ['mp4', 'webm', 'mov', 'mkv', 'avi'];
+// WebM is excluded: the ffmpeg.wasm core has no VP8 encoder, its VP9 encoder
+// crashes (memory allocation error) and H.264-in-WebM is not a valid
+// combination, so no WebM conversion can actually succeed.
+const VIDEO_EXTS = ['mp4', 'mov', 'mkv', 'avi'];
 
 function registerAudioConverter(from: string, to: string): void {
   registry.register(
