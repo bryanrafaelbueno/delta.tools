@@ -8,9 +8,9 @@ export function renderSidebar(): HTMLElement {
 
   const installed = registry.all().filter((c) => c.def.source === 'plugin').length;
   const recent = [
-    ['youtube', 'Youtube Downloader'],
-    ['mp3-wav', 'Mp3 to WAV'],
-    ['resize', 'Resize Images'],
+    ['youtube', 'Youtube Downloader', 'vid-mp4-mp3'],
+    ['mp3-wav', 'Mp3 to WAV', 'aud-mp3-wav'],
+    ['resize', 'Resize Images', 'img-png-png'],
   ] as const;
 
   el.innerHTML = `
@@ -31,7 +31,7 @@ export function renderSidebar(): HTMLElement {
         <span class="badge accent" id="installed-count">${installed}</span>
       </div>
       <div class="nav-label">Recents</div>
-      ${recent.map(([id, name]) => `<div class="nav-item nested" data-recent="${id}">${icon('arrow')} <span>${name}</span></div>`).join('')}
+      ${recent.map(([, name, tool]) => `<div class="nav-item nested" data-tool="${tool}">${icon('arrow')} <span>${name}</span></div>`).join('')}
     </div>
     <div class="sidebar-section">
       <div class="nav-item" data-action="theme">${icon('sun')} <span>Theme</span></div>
@@ -52,9 +52,11 @@ export function renderSidebar(): HTMLElement {
     });
   });
 
-  el.querySelectorAll('[data-recent]').forEach((node) => {
+  el.querySelectorAll('[data-tool]').forEach((node) => {
     node.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('delta:recent', { detail: (node as HTMLElement).dataset.recent }));
+      const tool = (node as HTMLElement).dataset.tool!;
+      const conv = registry.get(tool);
+      window.location.hash = conv ? `/tool/${tool}` : '/';
     });
   });
 
