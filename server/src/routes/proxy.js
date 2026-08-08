@@ -59,17 +59,26 @@ async function curlFetch(target, { method = 'GET', headers = {}, body = null }) 
     args.push('-X', 'POST');
     if (body) {
       args.push('--data-binary', body);
-      args.push('-H', 'Content-Type: text/plain');
+      if (!Object.keys(headers).some((k) => k.toLowerCase() === 'content-type')) {
+        args.push('-H', 'Content-Type: text/plain');
+      }
     }
   }
   args.push(target);
-  const { stdout } = await execFileAsync('curl', args, { maxBuffer: MAX_BYTES + 1024 * 1024 });
-  const marker = stdout.lastIndexOf('\n__STATUS:');
-  const outBody = marker >= 0 ? stdout.slice(0, marker) : stdout;
-  const meta = marker >= 0 ? stdout.slice(marker + 1) : '';
-  const status = Number(/__STATUS:(\d+)/.exec(meta)?.[1] ?? 502);
-  const type = /__TYPE:(\S*)/.exec(meta)?.[1] || 'application/octet-stream';
-  return { status, type, body: Buffer.from(outBody, 'utf8'), isCurl: true };
+  try {
+    const { stdout, stderr } = await execFileAsync('curl', args, { maxBuffer: MAX_BYTES + 1024 * 1024 });
+    const marker = stdout.lastIndexOf('\n__STATUS:');
+    const outBody = marker >= 0 ? stdout.slice(0, marker) : stdout;
+    const meta = marker >= 0 ? stdout.slice(marker + 1) : '';
+    const status = Number(/__STATUS:(\d+)/.exec(meta)?.[1] ?? 502);
+    const type = /__TYPE:(\S*)/.exec(meta)?.[1] || 'application/octet-stream';
+    return { status, type, body: Buffer.from(outBody, 'utf8'), isCurl: true };
+  } catch (err) {
+    // curl exits non-zero on connection failures / timeouts / TLS errors; the
+    // stderr line has the actual reason, which is much more useful than 502.
+    const reason = String(err?.stderr || err?.message || err).trim().split('\n').pop() || 'curl failed';
+    throw Object.assign(new Error(reason), { code: err?.code || 'ECURL' });
+  }
 }
 
 // ---- upstream via node:https (HTTP/1.1 fallback) ----
@@ -163,6 +172,18 @@ async function fetchUpstream(target, opts) {
   return nodeFetch(target, opts);
 }
 
+// Apply CORS to every response (including error paths) so the sandboxed
+// iframe — an opaque origin — can always read status + body. CORP is also set
+// because the app runs with COEP: require-corp (needed by ffmpeg.wasm), which
+// would otherwise block the sandbox's cross-origin fetches.
+proxyRouter.use((_req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Proxy-Url');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
+
 async function handleProxy(req, res) {
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const url = String(body.url ?? req.query.url ?? '');
@@ -192,9 +213,6 @@ async function handleProxy(req, res) {
 
   try {
     const upstream = await fetchUpstream(target.toString(), { method, headers, body: payload });
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Proxy-Url');
     res.setHeader('X-Proxy-Status', String(upstream.status));
     res.setHeader('X-Proxy-Length', String(upstream.body.length));
     res.setHeader('Content-Type', upstream.type || 'application/octet-stream');
@@ -211,8 +229,5 @@ async function handleProxy(req, res) {
 proxyRouter.get('/', handleProxy);
 proxyRouter.post('/', handleProxy);
 proxyRouter.options('/', (_req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Proxy-Url');
   res.status(204).end();
 });
