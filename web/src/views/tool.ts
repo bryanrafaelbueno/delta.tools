@@ -34,6 +34,8 @@ export function renderTool(id: string): HTMLElement {
   const { def } = conv;
   const converter = conv;
   const isMulti = def.to === 'pdf-merge';
+  const TEXT_INPUTS = new Set(['txt', 'md', 'csv', 'json', 'html']);
+  const acceptsText = TEXT_INPUTS.has(def.from);
   const jobs = new Map<string, JobState>();
 
   el.innerHTML = `
@@ -51,6 +53,15 @@ export function renderTool(id: string): HTMLElement {
         <div class="dz-sub">or click to browse · max ${isMulti ? '10' : '1'} ${def.from.toUpperCase()}</div>
         <input type="file" id="file-input" ${isMulti ? 'multiple' : ''} accept=".${def.from},${acceptType(def.from)}" />
       </div>
+      ${acceptsText ? `
+      <div class="text-input-wrap">
+        <div class="text-input-divider">or paste ${def.from === 'txt' ? 'text / a URL' : def.from.toUpperCase()} below</div>
+        <textarea id="text-input" rows="4" spellcheck="false" placeholder="${def.from === 'txt' ? 'Paste any text or a download URL here…' : `Paste ${def.from.toUpperCase()} content here…`}"></textarea>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+          <button class="btn btn-primary" id="text-submit" type="button" style="padding:8px 16px">Use text</button>
+          <span style="font-size:12px;color:var(--text-muted)">Treated as a ${def.from.toUpperCase()} file</span>
+        </div>
+      </div>` : ''}
     </div>
     <div class="panel" id="queue-panel" style="display:none">
       <div class="page-title" style="font-size:15px">Conversion queue</div>
@@ -104,6 +115,25 @@ export function renderTool(id: string): HTMLElement {
     handleFiles([...e.dataTransfer!.files]);
   });
   input.addEventListener('change', () => handleFiles([...input.files!]));
+
+  if (acceptsText) {
+    const textArea = el.querySelector('#text-input') as HTMLTextAreaElement;
+    const textSubmit = el.querySelector('#text-submit') as HTMLButtonElement;
+    const submitText = (): void => {
+      const text = textArea.value.trim();
+      if (!text) {
+        toast('Paste some text first', 'error');
+        return;
+      }
+      const file = new File([text], `paste.${def.from}`, { type: acceptType(def.from) });
+      textArea.value = '';
+      handleFiles([file]);
+    };
+    textSubmit.addEventListener('click', submitText);
+    textArea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitText();
+    });
+  }
 
   async function handleFiles(files: File[]): Promise<void> {
     const queuePanel = el.querySelector('#queue-panel') as HTMLElement;
@@ -256,6 +286,37 @@ export function renderTool(id: string): HTMLElement {
       download(result.data, result.name);
     });
     wrap.prepend(row);
+    const ext = result.name.split('.').pop()?.toLowerCase() ?? '';
+    if (TEXT_OUTPUTS.has(ext)) showResultText(result);
+  }
+
+  const TEXT_OUTPUTS = new Set(['txt', 'md', 'csv', 'json', 'html']);
+
+  function showResultText(result: { name: string; type: string; data: ArrayBuffer }): void {
+    const wrap = el.querySelector('#results') as HTMLElement;
+    const panel = document.createElement('div');
+    panel.className = 'result-text-panel';
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="file-name" style="font-size:13px">Text output</div>
+        <span style="flex:1"></span>
+        <button class="btn btn-ghost" data-action="copy-text" style="padding:5px 12px;font-size:12px">Copy</button>
+      </div>
+      <textarea readonly rows="8" spellcheck="false"></textarea>
+    `;
+    const ta = panel.querySelector('textarea') as HTMLTextAreaElement;
+    ta.value = new TextDecoder().decode(result.data);
+    panel.querySelector('[data-action="copy-text"]')!.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(ta.value);
+        toast('Copied to clipboard', 'success');
+      } catch {
+        ta.select();
+        document.execCommand('copy');
+        toast('Copied to clipboard', 'success');
+      }
+    });
+    wrap.prepend(panel);
   }
 
   // suggestions
