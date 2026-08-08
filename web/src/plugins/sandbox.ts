@@ -11,7 +11,7 @@ const SANDBOX_HTML = `
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-eval' 'unsafe-inline'; img-src 'none'; media-src 'none'; connect-src 'none'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-eval' 'unsafe-inline'; img-src 'none'; media-src 'none'; connect-src *; style-src 'unsafe-inline'">
 </head>
 <body>
 <script>

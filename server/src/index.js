@@ -4,6 +4,7 @@ import { pluginsRouter } from './routes/plugins.js';
 import { favoritesRouter } from './routes/favorites.js';
 import { adminRouter } from './routes/admin.js';
 import { iconsRouter } from './routes/icons.js';
+import { proxyRouter } from './routes/proxy.js';
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
@@ -20,6 +21,7 @@ app.use('/api/plugins', pluginsRouter);
 app.use('/api/favorites', favoritesRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/icons', iconsRouter);
+app.use('/api/proxy', proxyRouter);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'delta.tools' }));
 

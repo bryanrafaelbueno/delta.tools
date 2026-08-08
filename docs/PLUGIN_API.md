@@ -1,9 +1,8 @@
 # Delta.tools Plugin API
 
 Community plugins convert files right inside the browser. They run in a
-sandboxed iframe: **no network access, no cookies, no access to the parent
-page**. The only thing a plugin can do is receive a file and return a
-converted file.
+sandboxed iframe: **no cookies, no access to the parent page**. Network
+access is only allowed through the site's own proxy — see below.
 
 ## Plugin manifest
 
@@ -51,6 +50,39 @@ Plugins can rely on standard Web APIs that exist in a browser iframe:
 `crypto.subtle`, `OfflineAudioContext`, `document.createElement('canvas')`,
 etc.
 
+### Fetching remote content (proxy)
+
+Plugins can make HTTP requests through the site's proxy — useful for
+downloaders and anything that needs data from the internet. Direct cross-
+origin fetches are blocked by CORS, so always go through the proxy:
+
+```js
+return {
+  convert: async (input) => {
+    // Fetch a page (GET)
+    const html = await fetch(`/api/proxy?url=${encodeURIComponent('https://example.com/page')}`).then((r) => r.text());
+
+    // Fetch with a body/headers (POST). Custom headers are forwarded
+    // (cookie is stripped server-side).
+    const res = await fetch('/api/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: 'https://example.com/api',
+        headers: { 'X-Custom': 'value' },
+      }),
+    });
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    return bytes.buffer;
+  }
+};
+```
+
+Notes:
+- The proxy returns the upstream status code and `Content-Type` as-is.
+- Responses are capped at 256 MB; private/loopback hosts are rejected.
+- Binary downloads work fine — `res.arrayBuffer()` gives you the bytes.
+
 Example — a real image converter:
 
 ```js
@@ -84,7 +116,13 @@ stores the manifest and source; anyone can then install your plugin.
 ## Security model
 
 - Plugins execute inside an `iframe` with `sandbox="allow-scripts"` only —
-  opaque origin, no cookies, no localStorage, no network.
+  opaque origin, no cookies, no localStorage. The sandbox has no
+  `allow-same-origin`, so plugins can never reach the parent page.
+- Network is restricted by CSP to the site's own `/api/proxy` (and anything
+  that answers CORS), so plugins cannot silently exfiltrate — well, not
+  further than the proxy allows.
+- The proxy blocks private/loopback hosts and strips cookies, so plugins
+  cannot probe your local network or impersonate your session.
 - Communication with the app happens exclusively through `postMessage`
   with structured-clone-safe payloads (files travel as `ArrayBuffer`s).
 - The main app never imports or evaluates plugin code in its own context.
