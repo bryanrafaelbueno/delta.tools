@@ -1,0 +1,112 @@
+/* Delta.tools design tokens (from Figma: Delta.tools) */
+:root {
+  --bg: #000000;
+  --sidebar: #212121;
+  --panel: #0b0b0b;
+  --card: #1e1e1e;
+  --card-hover: #2a2a2a;
+  --text: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --hover: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #7c5cff;
+  --accent-hover: #9075ff;
+  --accent-soft: rgba(124, 92, 255, 0.15);
+  --danger: #ff5c5c;
+  --success: #4ade80;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --sidebar-width: 195px;
+  --font: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --transition: 140ms ease;
+}
+
+[data-theme='light'] {
+  --bg: #f4f4f6;
+  --sidebar: #ffffff;
+  --panel: #ffffff;
+  --card: #ffffff;
+  --card-hover: #f0f0f3;
+  --text: #111114;
+  --text-secondary: rgba(0, 0, 0, 0.75);
+  --text-muted: rgba(0, 0, 0, 0.45);
+  --hover: rgba(0, 0, 0, 0.04);
+  --border: rgba(0, 0, 0, 0.08);
+  --accent-soft: rgba(124, 92, 255, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition), color var(--transition);
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+button {
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input,
+select,
+textarea {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--hover);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

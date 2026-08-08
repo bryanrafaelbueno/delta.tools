@@ -1,0 +1,250 @@
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { registry } from './registry';
+import { toResult } from './helpers';
+import type { ConvertInput } from '../types';
+
+const CORE_URL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+
+let ffmpegPromise: Promise<FFmpeg> | null = null;
+let loadProgress = 0;
+
+export function getFfmpegProgress(): number {
+  return loadProgress;
+}
+
+export function getFfmpeg(): Promise<FFmpeg> {
+  if (!ffmpegPromise) {
+    ffmpegPromise = (async () => {
+      const ffmpeg = new FFmpeg();
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${CORE_URL}/ffmpeg-core.js`, 'text/javascript', {
+          onProgress: (p) => {
+            loadProgress = p * 0.8;
+          },
+        }),
+        wasmURL: await toBlobURL(`${CORE_URL}/ffmpeg-core.wasm`, 'application/wasm', {
+          onProgress: (p) => {
+            loadProgress = 0.8 + p * 0.2;
+          },
+        }),
+      });
+      return ffmpeg;
+    })();
+  }
+  return ffmpegPromise;
+}
+
+interface Job {
+  id: number;
+  inputName: string;
+  outputName: string;
+  args: string[];
+  onProgress?: (p: number) => void;
+}
+
+let jobId = 0;
+
+async function runFfmpeg(job: Job): Promise<Uint8Array> {
+  const ffmpeg = await getFfmpeg();
+  let prog: number | null = null;
+  const unsub = ffmpeg.on('progress', ({ progress }) => {
+    prog = progress;
+    job.onProgress?.(progress);
+  });
+  try {
+    await ffmpeg.writeFile(job.inputName, new Uint8Array(job.data as unknown as ArrayBuffer));
+    await ffmpeg.exec(job.args);
+    const out = await ffmpeg.readFile(job.outputName);
+    await ffmpeg.deleteFile(job.inputName);
+    await ffmpeg.deleteFile(job.outputName);
+    return out;
+  } finally {
+    unsub();
+  }
+}
+
+function icon(ext: string): string {
+  const map: Record<string, string> = {
+    mp3: '🎧',
+    wav: '🔊',
+    ogg: '🎵',
+    flac: '💿',
+    aac: '🎶',
+    m4a: '🎧',
+    opus: '🎵',
+    mp4: '🎬',
+    webm: '🌐',
+    mov: '🎥',
+    mkv: '🎞️',
+    avi: '📼',
+    gif: '🎞️',
+  };
+  return map[ext] ?? '🎵';
+}
+
+const AUDIO_EXTS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus'];
+const VIDEO_EXTS = ['mp4', 'webm', 'mov', 'mkv', 'avi'];
+
+function registerAudioConverter(from: string, to: string): void {
+  registry.register(
+    {
+      id: `aud-${from}-${to}`,
+      name: `${from.toUpperCase()} to ${to.toUpperCase()}`,
+      description: `Convert ${from.toUpperCase()} audio to ${to.toUpperCase()} with ffmpeg.wasm`,
+      category: 'audio',
+      from,
+      to,
+      source: 'builtin',
+      icon: icon(to),
+    },
+    async (input, onProgress) => {
+      const out = await runFfmpeg({
+        id: ++jobId,
+        inputName: input.name,
+        outputName: `out.${to}`,
+        args: ['-i', input.name, '-vn', '-acodec', codecFor(to), '-y', `out.${to}`],
+        onProgress,
+      });
+      return toResult(new Blob([out], { type: mimeFor(to) }), `${baseNoExt(input.name)}.${to}`);
+    },
+  );
+}
+
+function registerVideoConverter(from: string, to: string): void {
+  registry.register(
+    {
+      id: `vid-${from}-${to}`,
+      name: `${from.toUpperCase()} to ${to.toUpperCase()}`,
+      description: `Convert ${from.toUpperCase()} video to ${to.toUpperCase()} with ffmpeg.wasm`,
+      category: 'video',
+      from,
+      to,
+      source: 'builtin',
+      icon: icon(to),
+    },
+    async (input, onProgress) => {
+      const out = await runFfmpeg({
+        id: ++jobId,
+        inputName: input.name,
+        outputName: `out.${to}`,
+        args: ['-i', input.name, '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', '-y', `out.${to}`],
+        onProgress,
+      });
+      return toResult(new Blob([out], { type: mimeFor(to) }), `${baseNoExt(input.name)}.${to}`);
+    },
+  );
+}
+
+function registerVideoToAudio(from: string): void {
+  registry.register(
+    {
+      id: `vid-${from}-mp3`,
+      name: `${from.toUpperCase()} to MP3`,
+      description: `Extract audio from ${from.toUpperCase()} as MP3`,
+      category: 'audio',
+      from,
+      to: 'mp3',
+      source: 'builtin',
+      icon: '🎧',
+    },
+    async (input, onProgress) => {
+      const out = await runFfmpeg({
+        id: ++jobId,
+        inputName: input.name,
+        outputName: 'out.mp3',
+        args: ['-i', input.name, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', '-y', 'out.mp3'],
+        onProgress,
+      });
+      return toResult(new Blob([out], { type: 'audio/mpeg' }), `${baseNoExt(input.name)}.mp3`);
+    },
+  );
+}
+
+function registerVideoToGif(from: string): void {
+  registry.register(
+    {
+      id: `vid-${from}-gif`,
+      name: `${from.toUpperCase()} to GIF`,
+      description: `Convert ${from.toUpperCase()} video to animated GIF`,
+      category: 'video',
+      from,
+      to: 'gif',
+      source: 'builtin',
+      icon: '🎞️',
+    },
+    async (input, onProgress) => {
+      const out = await runFfmpeg({
+        id: ++jobId,
+        inputName: input.name,
+        outputName: 'out.gif',
+        args: ['-i', input.name, '-vf', 'fps=12,scale=480:-1:flags=lanczos', '-y', 'out.gif'],
+        onProgress,
+      });
+      return toResult(new Blob([out], { type: 'image/gif' }), `${baseNoExt(input.name)}.gif`);
+    },
+  );
+}
+
+function codecFor(to: string): string {
+  switch (to) {
+    case 'mp3':
+      return 'libmp3lame';
+    case 'wav':
+      return 'pcm_s16le';
+    case 'ogg':
+      return 'libvorbis';
+    case 'flac':
+      return 'flac';
+    case 'aac':
+    case 'm4a':
+      return 'aac';
+    case 'opus':
+      return 'libopus';
+    default:
+      return 'libmp3lame';
+  }
+}
+
+function mimeFor(ext: string): string {
+  const map: Record<string, string> = {
+    mp3: 'audio/mpeg',
+    wav: 'audio/wav',
+    ogg: 'audio/ogg',
+    flac: 'audio/flac',
+    aac: 'audio/aac',
+    m4a: 'audio/mp4',
+    opus: 'audio/opus',
+    mp4: 'video/mp4',
+    webm: 'video/webm',
+    mov: 'video/quicktime',
+    mkv: 'video/x-matroska',
+    avi: 'video/x-msvideo',
+    gif: 'image/gif',
+  };
+  return map[ext] ?? 'application/octet-stream';
+}
+
+function baseNoExt(name: string): string {
+  const i = name.lastIndexOf('.');
+  return i > 0 ? name.slice(0, i) : name;
+}
+
+export function registerMediaConverters(): void {
+  for (const from of AUDIO_EXTS) {
+    for (const to of AUDIO_EXTS) {
+      if (from === to) continue;
+      registerAudioConverter(from, to);
+    }
+  }
+  for (const from of VIDEO_EXTS) {
+    for (const to of VIDEO_EXTS) {
+      if (from === to) continue;
+      registerVideoConverter(from, to);
+    }
+  }
+  for (const from of VIDEO_EXTS) {
+    registerVideoToAudio(from);
+    registerVideoToGif(from);
+  }
+}
