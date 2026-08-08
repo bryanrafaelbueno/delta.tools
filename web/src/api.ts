@@ -54,4 +54,12 @@ export const api = {
 
   removeFavorite: (toolId: string) =>
     request<{ ok: boolean }>(`/favorites/${encodeURIComponent(toolId)}`, { method: 'DELETE' }),
+
+  listAdminPlugins: () => request<{ plugins: unknown[] }>('/admin/plugins'),
+
+  reviewPlugin: (id: string, action: 'approve' | 'reject') =>
+    request<{ ok: boolean; status: string }>(`/admin/plugins/${encodeURIComponent(id)}/review`, {
+      method: 'POST',
+      body: JSON.stringify({ action }),
+    }),
 };

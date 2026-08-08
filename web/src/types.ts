@@ -47,6 +47,7 @@ export interface MarketplacePlugin {
   inputs: string[];
   outputs: string[];
   downloads: number;
+  status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   entry: string;
 }
