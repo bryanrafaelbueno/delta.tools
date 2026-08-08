@@ -48,7 +48,7 @@ export function renderSidebar(): HTMLElement {
         <div class="avatar" id="profile-avatar">${state.user ? state.user.username[0].toUpperCase() : '?'}</div>
         <div class="who">
           <div class="name" id="profile-name">${state.user ? state.user.username : 'Sign in'}</div>
-          <div class="role" id="profile-role">${state.user ? state.user.role : 'Guest'}</div>
+          <div class="role" id="profile-role" style="${state.user && state.user.role ? '' : 'display:none'}">${state.user && state.user.role ? state.user.role : ''}</div>
         </div>
       </div>
     </div>
@@ -90,11 +90,13 @@ export function updateSidebarAuth(): void {
     if (state.user) {
       avatar.textContent = state.user.username[0].toUpperCase();
       name.textContent = state.user.username;
-      role.textContent = state.user.role;
+      role.textContent = state.user.role || '';
+      role.style.display = state.user.role ? '' : 'none';
     } else {
       avatar.textContent = '?';
       name.textContent = 'Sign in';
-      role.textContent = 'Guest';
+      role.textContent = '';
+      role.style.display = 'none';
     }
     profile.dataset.route = state.token ? '/profile' : '/auth';
   }

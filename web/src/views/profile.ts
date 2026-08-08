@@ -31,7 +31,7 @@ export function renderProfile(): HTMLElement {
       <div class="avatar" style="width:56px;height:56px;font-size:22px;border-radius:14px;background:var(--hover-strong);color:var(--text);display:flex;align-items:center;justify-content:center;font-weight:700">${user.username[0].toUpperCase()}</div>
       <div>
         <div style="font-size:17px;font-weight:700">${user.username}</div>
-        <div style="color:var(--text-muted);font-size:12.5px">${user.role} · member since ${new Date(user.created_at).toLocaleDateString()}</div>
+        <div style="color:var(--text-muted);font-size:12.5px">${user.role ? `${user.role} · ` : ''}member since ${new Date(user.created_at).toLocaleDateString()}</div>
       </div>
     </div>
     <div class="panel" style="max-width:520px">
