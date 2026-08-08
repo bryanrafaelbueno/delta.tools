@@ -38,7 +38,7 @@ Every conversion happens client-side — your files never leave your machine. No
 - 📝 Text — JSON pretty, CSV ⇄ JSON, base64 decode
 - 🧩 Sandboxed plugin marketplace — install community converters in one click
 - ⭐ Account favorites — star your tools and keep them synced (JWT auth)
-- 🌙 Dark, minimal UI — straight from your Figma design
+- 🌙 Dark, minimal UI — minimal and perfect
 
 ---
 
