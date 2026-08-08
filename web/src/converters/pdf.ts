@@ -1,6 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { registry } from './registry';
+import { svgIcons } from '../ui/svg-icons';
 import { toResult } from './helpers';
 
 const PDFJS = (pdfjsLib as unknown as { GlobalWorkerOptions: { workerSrc: string } }).GlobalWorkerOptions;
@@ -23,7 +24,7 @@ export function registerPdfConverters(): void {
         from: 'pdf',
         to: fmt,
         source: 'builtin',
-        icon: '📄',
+        icon: svgIcons.document,
       },
       async (input) => {
         const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(input.data) }).promise;
@@ -64,7 +65,7 @@ export function registerPdfConverters(): void {
       from: 'png',
       to: 'pdf',
       source: 'builtin',
-      icon: '📕',
+      icon: svgIcons.document,
     },
     async (input) => {
       const bitmap = await createImageBitmap(new Blob([input.data], { type: input.type }));
@@ -87,7 +88,7 @@ export function registerPdfConverters(): void {
       from: 'pdf',
       to: 'pdf-merge',
       source: 'builtin',
-      icon: '📚',
+      icon: svgIcons.document,
     },
     async () => {
       throw new Error('Multi-file operation — use the merge tool');
@@ -104,7 +105,7 @@ export function registerPdfConverters(): void {
       from: 'pdf',
       to: 'pdf-compress',
       source: 'builtin',
-      icon: '🗜️',
+      icon: svgIcons.document,
     },
     async (input) => {
       const doc = await PDFDocument.load(input.data);

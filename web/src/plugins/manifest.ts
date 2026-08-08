@@ -1,4 +1,5 @@
 import type { PluginManifest } from '../types';
+import { svgIcons } from '../ui/svg-icons';
 
 export function validateManifest(m: unknown): PluginManifest {
   const obj = m as Partial<PluginManifest>;
@@ -22,7 +23,8 @@ export function validateManifest(m: unknown): PluginManifest {
     version: obj.version,
     description: obj.description,
     author: obj.author,
-    icon: obj.icon || '🧩',
+    icon: obj.icon || svgIcons.plugin,
+    iconColor: obj.iconColor || undefined,
     inputs: obj.inputs,
     outputs: obj.outputs,
     entry: obj.entry,

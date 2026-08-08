@@ -1,4 +1,5 @@
 import { registry } from './registry';
+import { svgIcons } from '../ui/svg-icons';
 import type { ConvertInput } from '../types';
 
 function baseNoExt(name: string): string {
@@ -16,7 +17,7 @@ export function registerTextConverters(): void {
       from: 'json',
       to: 'json',
       source: 'builtin',
-      icon: '📝',
+      icon: svgIcons.text,
     },
     async (input: ConvertInput) => {
       const obj = JSON.parse(new TextDecoder().decode(input.data));
@@ -38,7 +39,7 @@ export function registerTextConverters(): void {
       from: 'csv',
       to: 'json',
       source: 'builtin',
-      icon: '📊',
+      icon: svgIcons.text,
     },
     async (input: ConvertInput) => {
       const text = new TextDecoder().decode(input.data);
@@ -68,7 +69,7 @@ export function registerTextConverters(): void {
       from: 'json',
       to: 'csv',
       source: 'builtin',
-      icon: '📊',
+      icon: svgIcons.text,
     },
     async (input: ConvertInput) => {
       const data = JSON.parse(new TextDecoder().decode(input.data));
@@ -97,7 +98,7 @@ export function registerTextConverters(): void {
       from: 'txt',
       to: 'bin',
       source: 'builtin',
-      icon: '🔓',
+      icon: svgIcons.text,
     },
     async (input: ConvertInput) => {
       const text = new TextDecoder().decode(input.data).trim();

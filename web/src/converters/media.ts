@@ -1,6 +1,7 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { toBlobURL } from '@ffmpeg/util';
 import { registry } from './registry';
+import { svgIconForExt, svgIcons } from '../ui/svg-icons';
 import { toResult } from './helpers';
 
 const CORE_URL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm';
@@ -66,22 +67,7 @@ async function runFfmpeg(job: Job): Promise<Uint8Array> {
 }
 
 function icon(ext: string): string {
-  const map: Record<string, string> = {
-    mp3: '🎧',
-    wav: '🔊',
-    ogg: '🎵',
-    flac: '💿',
-    aac: '🎶',
-    m4a: '🎧',
-    opus: '🎵',
-    mp4: '🎬',
-    webm: '🌐',
-    mov: '🎥',
-    mkv: '🎞️',
-    avi: '📼',
-    gif: '🎞️',
-  };
-  return map[ext] ?? '🎵';
+  return svgIconForExt(ext);
 }
 
 const AUDIO_EXTS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus'];
@@ -149,7 +135,7 @@ function registerVideoToAudio(from: string): void {
       from,
       to: 'mp3',
       source: 'builtin',
-      icon: '🎧',
+      icon: svgIcons.audio,
     },
     async (input, onProgress) => {
       const out = await runFfmpeg({
@@ -175,7 +161,7 @@ function registerVideoToGif(from: string): void {
       from,
       to: 'gif',
       source: 'builtin',
-      icon: '🎞️',
+      icon: svgIcons.video,
     },
     async (input, onProgress) => {
       const out = await runFfmpeg({

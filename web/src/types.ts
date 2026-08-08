@@ -7,6 +7,7 @@ export interface ConverterDef {
   to: string;
   source: 'builtin' | 'plugin';
   icon: string;
+  iconColor?: string;
   pluginId?: string;
 }
 
@@ -32,6 +33,7 @@ export interface PluginManifest {
   description: string;
   author: string;
   icon: string;
+  iconColor?: string;
   inputs: string[];
   outputs: string[];
   entry: string;
@@ -44,6 +46,7 @@ export interface MarketplacePlugin {
   description: string;
   author: string;
   icon: string;
+  iconColor?: string;
   inputs: string[];
   outputs: string[];
   downloads: number;
@@ -59,14 +62,16 @@ export interface User {
   created_at: string;
 }
 
+import { svgIcons } from './ui/svg-icons';
+
 export const CATEGORIES: Record<Category, { label: string; icon: string }> = {
-  image: { label: 'Image', icon: '🖼️' },
-  audio: { label: 'Audio', icon: '🎵' },
-  video: { label: 'Video', icon: '🎬' },
-  document: { label: 'Document', icon: '📄' },
-  archive: { label: 'Archive', icon: '🗜️' },
-  text: { label: 'Text', icon: '📝' },
-  other: { label: 'Plugins', icon: '🧩' },
+  image: { label: 'Image', icon: svgIcons.image },
+  audio: { label: 'Audio', icon: svgIcons.audio },
+  video: { label: 'Video', icon: svgIcons.video },
+  document: { label: 'Document', icon: svgIcons.document },
+  archive: { label: 'Archive', icon: svgIcons.archive },
+  text: { label: 'Text', icon: svgIcons.text },
+  other: { label: 'Plugins', icon: svgIcons.plugin },
 };
 
 export function extOf(name: string): string {

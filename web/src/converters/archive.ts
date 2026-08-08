@@ -1,5 +1,6 @@
 import { unzipSync, zipSync, gunzipSync, gzipSync, strToU8, strFromU8 } from 'fflate';
 import { registry } from './registry';
+import { svgIcons } from '../ui/svg-icons';
 import type { ConvertInput } from '../types';
 
 function baseNoExt(name: string): string {
@@ -92,7 +93,7 @@ export function registerArchiveConverters(): void {
         from,
         to,
         source: 'builtin',
-        icon: '🗜️',
+        icon: svgIcons.archive,
       },
       async (input: ConvertInput) => {
         const bytes = new Uint8Array(input.data);
@@ -135,7 +136,7 @@ export function registerArchiveConverters(): void {
       from: 'txt',
       to: 'gz',
       source: 'builtin',
-      icon: '🗜️',
+      icon: svgIcons.archive,
     },
     async (input: ConvertInput) => {
       const text = new TextDecoder().decode(input.data);
@@ -153,7 +154,7 @@ export function registerArchiveConverters(): void {
       from: 'gz',
       to: 'txt',
       source: 'builtin',
-      icon: '📝',
+      icon: svgIcons.archive,
     },
     async (input: ConvertInput) => {
       const bytes = gunzipSync(new Uint8Array(input.data));

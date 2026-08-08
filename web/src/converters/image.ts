@@ -27,18 +27,10 @@ export async function canvasToBlob(canvas: HTMLCanvasElement, mime: string, qual
   });
 }
 
+import { svgIconForExt } from '../ui/svg-icons';
+
 function icon(ext: string): string {
-  const map: Record<string, string> = {
-    png: '🖼️',
-    jpg: '🖼️',
-    jpeg: '🖼️',
-    webp: '🌐',
-    bmp: '🪟',
-    ico: '🖱️',
-    avif: '⚡',
-    gif: '🎞️',
-  };
-  return map[ext] ?? '🖼️';
+  return svgIconForExt(ext);
 }
 
 const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'ico', 'avif', 'gif'];

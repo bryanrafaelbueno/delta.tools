@@ -3,32 +3,10 @@ import { Sandbox } from './sandbox';
 import { registry } from '../converters/registry';
 import { pluginStore } from './store';
 
+import { svgIconForExt, svgIcons } from '../ui/svg-icons';
+
 export function iconFor(ext: string): string {
-  const map: Record<string, string> = {
-    png: '🖼️',
-    jpg: '🖼️',
-    jpeg: '🖼️',
-    webp: '🌐',
-    gif: '🎞️',
-    svg: '✒️',
-    ico: '🖱️',
-    bmp: '🪟',
-    avif: '⚡',
-    pdf: '📄',
-    txt: '📝',
-    md: '📝',
-    html: '🌍',
-    json: '🧾',
-    csv: '📊',
-    mp3: '🎧',
-    wav: '🔊',
-    ogg: '🎵',
-    flac: '💿',
-    mp4: '🎬',
-    webm: '🌐',
-    mov: '🎥',
-  };
-  return map[ext] ?? '🧩';
+  return svgIconForExt(ext);
 }
 
 interface InstalledConverter {
@@ -65,7 +43,8 @@ export class PluginManager {
               to: output,
               source: 'plugin',
               pluginId: manifest.id,
-              icon: manifest.icon || iconFor(output),
+              icon: (manifest.icon && !/^https?:|^data:/.test(manifest.icon) ? svgIcons.plugin : manifest.icon) || iconFor(output),
+              iconColor: manifest.iconColor,
             },
             async (inp) => {
               const result = await sandbox.convert(inp);
