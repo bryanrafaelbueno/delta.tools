@@ -32,6 +32,9 @@ db.exec(`
     outputs TEXT NOT NULL,
     entry TEXT NOT NULL,
     downloads INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'pending',
+    reviewed_at TEXT,
+    reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     author_id INTEGER REFERENCES users(id) ON DELETE SET NULL
   );
@@ -43,3 +46,15 @@ db.exec(`
     PRIMARY KEY (user_id, tool_id)
   );
 `);
+
+// Migrations for existing databases (CREATE TABLE IF NOT EXISTS won't add columns)
+const pluginCols = db.prepare(`PRAGMA table_info(plugins)`).all().map((c) => c.name);
+if (!pluginCols.includes('status')) {
+  db.exec(`ALTER TABLE plugins ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`);
+}
+if (!pluginCols.includes('reviewed_at')) {
+  db.exec(`ALTER TABLE plugins ADD COLUMN reviewed_at TEXT`);
+}
+if (!pluginCols.includes('reviewed_by')) {
+  db.exec(`ALTER TABLE plugins ADD COLUMN reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL`);
+}

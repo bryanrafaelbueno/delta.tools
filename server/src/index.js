@@ -2,6 +2,7 @@ import express from 'express';
 import { authRouter } from './routes/auth.js';
 import { pluginsRouter } from './routes/plugins.js';
 import { favoritesRouter } from './routes/favorites.js';
+import { adminRouter } from './routes/admin.js';
 import { seed } from './seed.js';
 
 seed();
@@ -19,6 +20,7 @@ app.use((_req, res, next) => {
 app.use('/api/auth', authRouter);
 app.use('/api/plugins', pluginsRouter);
 app.use('/api/favorites', favoritesRouter);
+app.use('/api/admin', adminRouter);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'delta.tools' }));
 

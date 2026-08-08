@@ -16,17 +16,23 @@ function rowToPlugin(row) {
     outputs: JSON.parse(row.outputs),
     entry: row.entry,
     downloads: row.downloads,
+    status: row.status,
     created_at: row.created_at,
   };
 }
 
+// Public marketplace: only approved plugins
 pluginsRouter.get('/', (_req, res) => {
-  const rows = db.prepare('SELECT * FROM plugins ORDER BY created_at DESC').all();
+  const rows = db
+    .prepare("SELECT * FROM plugins WHERE status = 'approved' ORDER BY created_at DESC")
+    .all();
   res.json({ plugins: rows.map(rowToPlugin) });
 });
 
 pluginsRouter.get('/:id', (req, res) => {
-  const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(req.params.id);
+  const row = db
+    .prepare("SELECT * FROM plugins WHERE id = ? AND status = 'approved'")
+    .get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Plugin not found' });
   res.json({ plugin: rowToPlugin(row) });
 });
@@ -53,16 +59,17 @@ pluginsRouter.post('/', (req, res) => {
     if (existing.author_id !== user.id) {
       return res.status(403).json({ error: 'Plugin id is already taken by another author' });
     }
+    // Updates go back to moderation
     db.prepare(
-      `UPDATE plugins SET name=?, version=?, description=?, icon=?, inputs=?, outputs=?, entry=? WHERE id=?`,
+      `UPDATE plugins SET name=?, version=?, description=?, icon=?, inputs=?, outputs=?, entry=?, status='pending', reviewed_at=NULL, reviewed_by=NULL WHERE id=?`,
     ).run(name, version, description, icon ?? '🧩', JSON.stringify(inputs), JSON.stringify(outputs), entry, id);
     const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
     return res.json({ plugin: rowToPlugin(row) });
   }
 
   db.prepare(
-    `INSERT INTO plugins (id, name, version, description, author, icon, inputs, outputs, entry, author_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO plugins (id, name, version, description, author, icon, inputs, outputs, entry, status, author_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
   ).run(id, name, version, description, user.username, icon ?? '🧩', JSON.stringify(inputs), JSON.stringify(outputs), entry, user.id);
   const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
   res.status(201).json({ plugin: rowToPlugin(row) });

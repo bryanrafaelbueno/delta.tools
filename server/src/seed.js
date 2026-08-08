@@ -134,8 +134,8 @@ export function seed() {
     return;
   }
   const insert = db.prepare(
-    `INSERT INTO plugins (id, name, version, description, author, icon, inputs, outputs, entry, downloads, author_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+    `INSERT INTO plugins (id, name, version, description, author, icon, inputs, outputs, entry, downloads, status, author_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', NULL)`,
   );
   for (const p of plugins) {
     insert.run(p.id, p.name, p.version, p.description, p.author, p.icon, JSON.stringify(p.inputs), JSON.stringify(p.outputs), p.entry, 0);
