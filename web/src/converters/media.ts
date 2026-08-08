@@ -3,7 +3,7 @@ import { toBlobURL } from '@ffmpeg/util';
 import { registry } from './registry';
 import { toResult } from './helpers';
 
-const CORE_URL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
+const CORE_URL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm';
 
 let ffmpegPromise: Promise<FFmpeg> | null = null;
 let loadProgress = 0;

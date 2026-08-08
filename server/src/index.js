@@ -8,6 +8,13 @@ seed();
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 
+// Cross-origin isolation: required by ffmpeg.wasm (SharedArrayBuffer)
+app.use((_req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  next();
+});
+
 app.use('/api/auth', authRouter);
 app.use('/api/plugins', pluginsRouter);
 
