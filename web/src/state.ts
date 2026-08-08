@@ -5,6 +5,7 @@ const THEME_KEY = 'delta_theme';
 
 class State {
   user: User | null = null;
+  favorites: string[] = [];
   listeners = new Set<() => void>();
 
   subscribe(fn: () => void): () => void {
@@ -24,12 +25,22 @@ class State {
     if (token) localStorage.setItem(TOKEN_KEY, token);
     else localStorage.removeItem(TOKEN_KEY);
     this.user = user;
+    if (!token) this.favorites = [];
     this.notify();
   }
 
   setUser(user: User | null): void {
     this.user = user;
     this.notify();
+  }
+
+  setFavorites(ids: string[]): void {
+    this.favorites = ids;
+    this.notify();
+  }
+
+  isFavorite(toolId: string): boolean {
+    return this.favorites.includes(toolId);
   }
 
   get theme(): 'dark' | 'light' {

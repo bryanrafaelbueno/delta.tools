@@ -43,4 +43,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(manifest),
     }),
+
+  listFavorites: () => request<{ favorites: string[] }>('/favorites'),
+
+  addFavorite: (toolId: string) =>
+    request<{ ok: boolean }>('/favorites', {
+      method: 'POST',
+      body: JSON.stringify({ toolId }),
+    }),
+
+  removeFavorite: (toolId: string) =>
+    request<{ ok: boolean }>(`/favorites/${encodeURIComponent(toolId)}`, { method: 'DELETE' }),
 };
