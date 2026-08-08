@@ -4,7 +4,6 @@ import './styles/components.css';
 import { renderSidebar, updateSidebarAuth, updateSidebarFavorites } from './ui/shell';
 import { parseHash, type Route } from './router';
 import { registerBuiltinConverters } from './converters';
-import { registry } from './converters/registry';
 import { state } from './state';
 import { api } from './api';
 import { renderDashboard } from './views/dashboard';
@@ -79,7 +78,10 @@ async function boot(): Promise<void> {
   render();
 
   if (state.token) {
-    api.me().catch(() => state.setAuth(null, null));
+    api
+      .me()
+      .then((res) => state.setUser(res.user as never))
+      .catch(() => state.setAuth(null, null));
     loadFavorites();
   }
 
@@ -99,23 +101,6 @@ async function boot(): Promise<void> {
 
   window.addEventListener('delta:recent', ((e: CustomEvent) => {
     window.location.hash = `/tool/recent-${e.detail}`;
-  }) as EventListener);
-
-  window.addEventListener('delta:search', ((e: CustomEvent) => {
-    const q = String(e.detail || '').toLowerCase();
-    const input = document.getElementById('hero-search-input') as HTMLInputElement | null;
-    if (input) input.value = e.detail;
-    if (!q) return;
-    const match = registry
-      .all()
-      .map((c) => c.def)
-      .find(
-        (d) =>
-          d.name.toLowerCase().includes(q) ||
-          d.description.toLowerCase().includes(q) ||
-          `${d.from}->${d.to}`.includes(q),
-      );
-    if (match) window.location.hash = `/tool/${match.id}`;
   }) as EventListener);
 }
 
