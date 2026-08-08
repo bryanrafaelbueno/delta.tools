@@ -1,7 +1,8 @@
 const icons: Record<string, string> = {
   home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>',
   store: '<path d="M4 8l1.5-4.5h13L20 8"/><path d="M4 8a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/>',
-  wrench: '<path d="M14.5 6.5a4 4 0 0 0 4.9 4.9l1.6 1.6a7.5 7.5 0 1 1-3.5-3.5l-1.6 1.6a4 4 0 0 0-1.4-4.6"/><circle cx="8.5" cy="15.5" r="1.5"/>',
+  wrench:
+    '<path d="M21.71,15.58l-4.52-4.51a6.85,6.85,0,0,0,.14-1.4A7.67,7.67,0,0,0,6.42,2.72a1,1,0,0,0-.57.74,1,1,0,0,0,.28.88l4.35,4.34-1.8,1.8L4.34,6.13a1,1,0,0,0-.88-.27,1,1,0,0,0-.74.56,7.67,7.67,0,0,0,7,10.91,6.85,6.85,0,0,0,1.4-.14l4.51,4.52a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42l-4.9-4.9a1,1,0,0,0-.95-.26,5.88,5.88,0,0,1-1.48.2A5.67,5.67,0,0,1,4,9.67a6,6,0,0,1,.08-1L8,12.6a1,1,0,0,0,1.42,0L12.6,9.39A1,1,0,0,0,12.6,8L8.71,4.08a6.12,6.12,0,0,1,1-.08,5.67,5.67,0,0,1,5.66,5.67,5.88,5.88,0,0,1-.2,1.48,1,1,0,0,0,.26.95l4.9,4.9a1,1,0,0,0,1.42-1.42Z"/>',
   download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.08a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.08a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.03Z"/>',
@@ -13,6 +14,7 @@ const icons: Record<string, string> = {
   check: '<path d="m4.5 12.5 5 5 10-11"/>',
   upload: '<path d="M12 15V4"/><path d="m7 9 5-5 5 5"/><path d="M4 21h16"/>',
   puzzle: '<path d="M19.5 12.5a2 2 0 0 1-2-2V8h-2.5a2 2 0 0 1 0-4H17.5V1.5h-2.5a2 2 0 0 1 0-4"/>',
+  alert: '<path d="M12 3 2.5 20h19Z"/><path d="M12 9.5v4.5"/><path d="M12 17.5h.01"/>',
   star: '<path d="M12 2.5l2.95 6 6.6.96-4.78 4.66 1.13 6.58L12 17.57l-5.9 3.1 1.13-6.58L2.45 9.46l6.6-.96Z"/>',
   arrow: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
   code: '<path d="m8 9-3 3 3 3"/><path d="m16 9 3 3-3 3"/><path d="m13 5-2 14"/>',
@@ -21,8 +23,14 @@ const icons: Record<string, string> = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/>',
 };
 
+// Icons that are filled silhouettes (from Iconscout) instead of strokes
+const filledIcons = new Set(['wrench']);
+
 export function icon(name: string): string {
   const body = icons[name] ?? icons.info;
+  if (filledIcons.has(name)) {
+    return `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none">${body}</svg>`;
+  }
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 }
 

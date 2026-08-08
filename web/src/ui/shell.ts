@@ -25,9 +25,9 @@ export function renderSidebar(): HTMLElement {
       </div>
       <div class="nav-item" data-route="/">${icon('home')} <span>Dashboard</span></div>
       <div class="nav-item" data-route="/marketplace">${icon('store')} <span>Marketplace</span></div>
-      <div class="nav-item" id="nav-moderation" data-route="/moderation" style="display:${state.user?.role === 'Developer' ? '' : 'none'}">${icon('puzzle')} <span>Moderation</span></div>
+      <div class="nav-item" id="nav-moderation" data-route="/moderation" style="display:${state.user?.role === 'Developer' ? '' : 'none'}"><span class="nav-icon-alert">${icon('alert')}</span> <span>Moderation</span></div>
       <div class="nav-separator"></div>
-      <div class="nav-item" data-route="/manage">${icon('puzzle')} <span>Manage plugins</span></div>
+      <div class="nav-item" data-route="/manage">${icon('wrench')} <span>Manage plugins</span></div>
       <div class="nav-item" data-route="/tools">${icon('star')} <span>Favorite Tools</span>
         <span class="badge accent" id="favorites-count">${state.token ? favorites.length : ''}</span>
       </div>
