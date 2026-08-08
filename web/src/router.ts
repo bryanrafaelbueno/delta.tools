@@ -1,8 +1,7 @@
 export type Route =
   | { name: 'home' }
   | { name: 'marketplace' }
-  | { name: 'tools' }
-  | { name: 'manage' }
+  | { name: 'tools'; tab?: 'favorites' | 'manage' }
   | { name: 'settings' }
   | { name: 'auth' }
   | { name: 'profile' }
@@ -21,9 +20,9 @@ export function parseHash(hash: string): Route {
     case 'marketplace':
       return { name: 'marketplace' };
     case 'tools':
-      return { name: 'tools' };
+      return { name: 'tools', tab: parts[1] === 'manage' ? 'manage' : 'favorites' };
     case 'manage':
-      return { name: 'manage' };
+      return { name: 'tools', tab: 'manage' };
     case 'settings':
       return { name: 'settings' };
     case 'auth':

@@ -8,8 +8,7 @@ import { state } from './state';
 import { api } from './api';
 import { renderDashboard } from './views/dashboard';
 import { renderMarketplace } from './views/marketplace';
-import { renderTools } from './views/tools';
-import { renderManagePlugins } from './views/manage';
+import { renderMyPlugins } from './views/myplugins';
 import { renderSettings } from './views/settings';
 import { renderAuth } from './views/auth';
 import { renderProfile } from './views/profile';
@@ -40,9 +39,7 @@ function routeContent(route: Route): HTMLElement {
     case 'marketplace':
       return renderMarketplace();
     case 'tools':
-      return renderTools();
-    case 'manage':
-      return renderManagePlugins();
+      return renderMyPlugins(route.tab ?? 'favorites');
     case 'settings':
       return renderSettings();
     case 'auth':
@@ -124,6 +121,8 @@ function render(): void {
     n.classList.toggle(
       'active',
       href === active ||
+        (route.name === 'tools' && href === '/tools' && route.tab !== 'manage') ||
+        (route.name === 'tools' && href === '/manage' && route.tab === 'manage') ||
         (route.name === 'tool' && (href === '/tools' || href === '/manage')),
     );
   });
