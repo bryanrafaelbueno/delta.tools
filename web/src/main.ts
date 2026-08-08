@@ -9,9 +9,11 @@ import { api } from './api';
 import { renderDashboard } from './views/dashboard';
 import { renderMarketplace } from './views/marketplace';
 import { renderTools } from './views/tools';
+import { renderManagePlugins } from './views/manage';
 import { renderSettings } from './views/settings';
 import { renderAuth } from './views/auth';
 import { renderProfile } from './views/profile';
+import { renderModeration } from './views/moderation';
 import { renderTool } from './views/tool';
 import { renderPlugin } from './views/plugin';
 import { pluginManager } from './plugins/manager';
@@ -39,12 +41,16 @@ function routeContent(route: Route): HTMLElement {
       return renderMarketplace();
     case 'tools':
       return renderTools();
+    case 'manage':
+      return renderManagePlugins();
     case 'settings':
       return renderSettings();
     case 'auth':
       return renderAuth();
     case 'profile':
       return renderProfile();
+    case 'moderation':
+      return renderModeration();
     case 'tool':
       return renderTool(route.id);
     case 'plugin':
@@ -115,7 +121,11 @@ function render(): void {
   const active = route.name === 'home' ? '/' : `/${route.name}`;
   document.querySelectorAll('.nav-item[data-route]').forEach((n) => {
     const href = (n as HTMLElement).dataset.route;
-    n.classList.toggle('active', href === active || (route.name === 'tool' && href === '/tools'));
+    n.classList.toggle(
+      'active',
+      href === active ||
+        (route.name === 'tool' && (href === '/tools' || href === '/manage')),
+    );
   });
 }
 
