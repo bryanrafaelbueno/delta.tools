@@ -12,7 +12,7 @@ export function renderTools(): HTMLElement {
 
   el.innerHTML = `
     <div>
-      <div class="page-title">Your tools</div>
+      <div class="page-title">Favorite Tools</div>
       <div class="page-sub">Plugins you've installed. Uninstall any time — nothing is locked in.</div>
     </div>
     <div class="panel">
@@ -56,8 +56,6 @@ export function renderTools(): HTMLElement {
         await pluginStore.uninstall(id);
         toast('Plugin uninstalled', 'success');
         refresh();
-        const counter = document.getElementById('installed-count');
-        if (counter) counter.textContent = String((await pluginStore.list()).length);
       });
     });
   }

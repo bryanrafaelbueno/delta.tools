@@ -1,9 +1,10 @@
 import './styles/base.css';
 import './styles/layout.css';
 import './styles/components.css';
-import { renderSidebar, renderTopbar, updateSidebarAuth } from './ui/shell';
+import { renderSidebar, updateSidebarAuth, updateSidebarFavorites } from './ui/shell';
 import { parseHash, type Route } from './router';
 import { registerBuiltinConverters } from './converters';
+import { registry } from './converters/registry';
 import { state } from './state';
 import { api } from './api';
 import { renderDashboard } from './views/dashboard';
@@ -23,7 +24,6 @@ function renderShell(): void {
   const sidebar = renderSidebar();
   const main = document.createElement('div');
   main.className = 'main';
-  main.appendChild(renderTopbar());
   const content = document.createElement('div');
   content.className = 'content';
   content.id = 'content';
@@ -55,6 +55,16 @@ function routeContent(route: Route): HTMLElement {
   }
 }
 
+async function loadFavorites(): Promise<void> {
+  if (!state.token) return;
+  try {
+    const res = await api.listFavorites();
+    state.setFavorites(res.favorites);
+  } catch {
+    // offline / server down: keep whatever we have
+  }
+}
+
 async function boot(): Promise<void> {
   document.documentElement.dataset.theme = state.theme;
   registerBuiltinConverters();
@@ -62,8 +72,7 @@ async function boot(): Promise<void> {
 
   state.subscribe(() => {
     updateSidebarAuth();
-    const themeBtn = document.getElementById('btn-theme');
-    if (themeBtn) themeBtn.innerHTML = state.theme === 'dark' ? iconByName('moon') : iconByName('sun');
+    updateSidebarFavorites();
   });
 
   window.addEventListener('hashchange', render);
@@ -71,11 +80,16 @@ async function boot(): Promise<void> {
 
   if (state.token) {
     api.me().catch(() => state.setAuth(null, null));
+    loadFavorites();
   }
+
+  window.addEventListener('delta:auth', () => {
+    loadFavorites();
+  });
 
   window.addEventListener('keydown', (e) => {
     if (e.key === '/') {
-      const input = document.getElementById('global-search') as HTMLInputElement | null;
+      const input = document.getElementById('hero-search-input') as HTMLInputElement | null;
       if (input && document.activeElement !== input) {
         e.preventDefault();
         input.focus();
@@ -88,22 +102,21 @@ async function boot(): Promise<void> {
   }) as EventListener);
 
   window.addEventListener('delta:search', ((e: CustomEvent) => {
-    const input = document.getElementById('global-search') as HTMLInputElement | null;
+    const q = String(e.detail || '').toLowerCase();
+    const input = document.getElementById('hero-search-input') as HTMLInputElement | null;
     if (input) input.value = e.detail;
-    const grid = document.getElementById('tool-grid');
-    if (grid) {
-      grid.dispatchEvent(new CustomEvent('delta:filter', { detail: e.detail }));
-    }
+    if (!q) return;
+    const match = registry
+      .all()
+      .map((c) => c.def)
+      .find(
+        (d) =>
+          d.name.toLowerCase().includes(q) ||
+          d.description.toLowerCase().includes(q) ||
+          `${d.from}->${d.to}`.includes(q),
+      );
+    if (match) window.location.hash = `/tool/${match.id}`;
   }) as EventListener);
-}
-
-function iconByName(name: string): string {
-  // small local copy to avoid circular import
-  const icons: Record<string, string> = {
-    sun: '<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/><circle cx="12" cy="12" r="4"/>',
-    moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>',
-  };
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg>`;
 }
 
 function render(): void {

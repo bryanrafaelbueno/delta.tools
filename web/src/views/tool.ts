@@ -5,6 +5,9 @@ import { download } from '../converters/helpers';
 import { bindToolCards, toolCard } from './dashboard';
 import { getFfmpegProgress } from '../converters/media';
 import { toast } from '../ui/toast';
+import { state } from '../state';
+import { api } from '../api';
+import { icon } from '../ui/icons';
 
 interface JobState {
   name: string;
@@ -34,7 +37,10 @@ export function renderTool(id: string): HTMLElement {
 
   el.innerHTML = `
     <div>
-      <div class="page-title">${def.icon} ${def.name}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="page-title">${def.icon} ${def.name}</div>
+        <button class="icon-btn fav-toggle ${state.isFavorite(def.id) ? 'fav-on' : ''}" id="fav-toggle" title="${state.isFavorite(def.id) ? 'Remove from favorites' : 'Add to favorites'}">${icon('star')}</button>
+      </div>
       <div class="page-sub">${def.description} — 100% client-side</div>
     </div>
     <div class="panel">
@@ -59,6 +65,30 @@ export function renderTool(id: string): HTMLElement {
 
   const dz = el.querySelector('#dropzone') as HTMLElement;
   const input = el.querySelector('#file-input') as HTMLInputElement;
+
+  const favBtn = el.querySelector('#fav-toggle') as HTMLButtonElement | null;
+  favBtn?.addEventListener('click', async () => {
+    if (!state.token) {
+      toast('Sign in to save favorites', 'error');
+      window.location.hash = '/auth';
+      return;
+    }
+    const isFav = state.isFavorite(def.id);
+    try {
+      if (isFav) {
+        await api.removeFavorite(def.id);
+        state.setFavorites(state.favorites.filter((id) => id !== def.id));
+      } else {
+        await api.addFavorite(def.id);
+        state.setFavorites([...state.favorites, def.id]);
+      }
+      favBtn.classList.toggle('fav-on', !isFav);
+      favBtn.title = isFav ? 'Add to favorites' : 'Remove from favorites';
+      toast(isFav ? 'Removed from favorites' : 'Added to favorites', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not update favorite', 'error');
+    }
+  });
 
   dz.addEventListener('click', () => input.click());
   dz.addEventListener('dragover', (e) => {

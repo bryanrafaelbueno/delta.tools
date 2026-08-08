@@ -1,90 +1,44 @@
-import { registry } from '../converters/registry';
-import { CATEGORIES, type Category, type ConverterDef } from '../types';
-
-const CATEGORY_ORDER: Category[] = ['image', 'audio', 'video', 'document', 'archive', 'text'];
+import { CATEGORIES, type ConverterDef } from '../types';
+import { icon, logo } from '../ui/icons';
+import { state } from '../state';
+import { api } from '../api';
+import { toast } from '../ui/toast';
 
 export function renderDashboard(): HTMLElement {
   const el = document.createElement('div');
   el.className = 'view';
 
-  const all = registry.all().map((c) => c.def);
-
   el.innerHTML = `
-    <div class="page-title">Dashboard</div>
-    <div class="page-sub">${all.length} tools ready — everything runs in your browser</div>
-    <div class="panel">
-      <div class="segment" id="cat-filter">
-        <button data-cat="" class="active">All</button>
-        ${CATEGORY_ORDER.map((c) => `<button data-cat="${c}">${CATEGORIES[c].icon} ${CATEGORIES[c].label}</button>`).join('')}
+    <div class="hero">
+      <div class="hero-logo">${logo()}<span class="hero-title">Delta.tools</span></div>
+      <div class="hero-search">
+        ${icon('search')}
+        <input type="text" id="hero-search-input" placeholder="Search for some tool..." autocomplete="off" />
+        <span class="slash">/</span>
       </div>
-      <div style="height: 14px"></div>
-      <div class="tool-grid" id="tool-grid"></div>
     </div>
   `;
 
-  const grid = el.querySelector('#tool-grid')!;
-  const filter = el.querySelector('#cat-filter')!;
-
-  function renderTools(cat: Category | '' = '', query = ''): void {
-    let list = all;
-    if (cat) list = list.filter((d) => d.category === cat);
-    if (query) {
-      const q = query.toLowerCase();
-      list = list.filter(
-        (d) =>
-          d.name.toLowerCase().includes(q) ||
-          d.description.toLowerCase().includes(q) ||
-          `${d.from}->${d.to}`.includes(q),
-      );
+  const search = el.querySelector('#hero-search-input') as HTMLInputElement;
+  search.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && search.value.trim()) {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent('delta:search', { detail: search.value.trim() }));
     }
-    grid.innerHTML = list
-      .slice(0, 60)
-      .map(toolCard)
-      .join('');
-    if (list.length === 0) {
-      grid.innerHTML = `<div class="empty">No tools match your search.</div>`;
-    }
-    bindToolCards(grid as HTMLElement);
-  }
-
-  filter.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null;
-    if (!btn) return;
-    filter.querySelectorAll('button').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderTools(btn.dataset.cat as Category | '');
   });
 
-  const search = document.getElementById('global-search') as HTMLInputElement | null;
-  if (search) {
-    search.addEventListener('input', () => renderTools(currentCat(), search.value));
-    search.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && search.value.trim()) {
-        e.preventDefault();
-        window.dispatchEvent(new CustomEvent('delta:search', { detail: search.value.trim() }));
-      }
-    });
-  }
-
-  el.addEventListener('delta:filter', ((e: Event) => {
-    const detail = (e as CustomEvent).detail as string;
-    renderTools(currentCat(), detail);
-  }) as EventListener);
-
-  function currentCat(): Category | '' {
-    const activeBtn = filter.querySelector('button.active') as HTMLButtonElement | null;
-    return (activeBtn?.dataset.cat as Category | '') || '';
-  }
-
-  renderTools();
   return el;
 }
 
 export function toolCard(def: ConverterDef): string {
   const multi = def.to === 'pdf-merge' ? ' ⧉' : '';
+  const fav = state.isFavorite(def.id);
   return `
     <div class="tool-card" data-tool-id="${def.id}">
-      <div class="icon">${def.icon}</div>
+      <div class="tool-card-top">
+        <div class="icon">${def.icon}</div>
+        <button class="fav-btn ${fav ? 'fav-on' : ''}" data-fav="${def.id}" title="${fav ? 'Remove from favorites' : 'Add to favorites'}">${icon('star')}</button>
+      </div>
       <div class="name">${def.name}${multi}</div>
       <div class="desc">${def.description}</div>
       <div class="meta">
@@ -97,8 +51,35 @@ export function toolCard(def: ConverterDef): string {
 
 export function bindToolCards(root: HTMLElement): void {
   root.querySelectorAll('.tool-card[data-tool-id]').forEach((card) => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('.fav-btn')) return;
       window.location.hash = `/tool/${card.getAttribute('data-tool-id')}`;
+    });
+  });
+  root.querySelectorAll('.fav-btn[data-fav]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-fav')!;
+      if (!state.token) {
+        toast('Sign in to save favorites', 'error');
+        window.location.hash = '/auth';
+        return;
+      }
+      const isFav = state.isFavorite(id);
+      try {
+        if (isFav) {
+          await api.removeFavorite(id);
+          state.setFavorites(state.favorites.filter((f) => f !== id));
+        } else {
+          await api.addFavorite(id);
+          state.setFavorites([...state.favorites, id]);
+        }
+        btn.classList.toggle('fav-on', !isFav);
+        (btn as HTMLButtonElement).title = isFav ? 'Add to favorites' : 'Remove from favorites';
+        toast(isFav ? 'Removed from favorites' : 'Added to favorites', 'success');
+      } catch (err) {
+        toast(err instanceof Error ? err.message : 'Could not update favorite', 'error');
+      }
     });
   });
 }
