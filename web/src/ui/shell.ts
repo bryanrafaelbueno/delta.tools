@@ -1,6 +1,7 @@
 import { state } from '../state';
 import { icon, logo } from './icons';
 import { registry } from '../converters/registry';
+import { renderIcon, hydrateSvgIconsAsync } from './icon-render';
 
 export function renderSidebar(): HTMLElement {
   const el = document.createElement('aside');
@@ -36,7 +37,7 @@ export function renderSidebar(): HTMLElement {
           state.token
             ? favorites.length
               ? favorites
-                  .map((d) => `<div class="nav-item nested" data-tool="${d.id}"><span class="fav-icon">${d.icon}</span> <span>${d.name}</span></div>`)
+                  .map((d) => `<div class="nav-item nested" data-tool="${d.id}"><span class="fav-icon">${renderIcon(d.icon, d.iconColor, 14)}</span> <span>${d.name}</span></div>`)
                   .join('')
               : '<div class="nav-item nested muted" data-route="/tools">No favorites yet — star a tool</div>'
             : '<div class="nav-item nested muted" data-route="/auth">Sign in to save favorites</div>'
@@ -80,6 +81,8 @@ export function renderSidebar(): HTMLElement {
     state.setTheme(state.theme === 'dark' ? 'light' : 'dark');
   });
 
+  hydrateSvgIconsAsync(el);
+
   return el;
 }
 
@@ -119,9 +122,10 @@ export function updateSidebarFavorites(): void {
     .slice(0, 8);
   list.innerHTML = favorites.length
     ? favorites
-        .map((d) => `<div class="nav-item nested" data-tool="${d.id}"><span class="fav-icon">${d.icon}</span> <span>${d.name}</span></div>`)
+        .map((d) => `<div class="nav-item nested" data-tool="${d.id}"><span class="fav-icon">${renderIcon(d.icon, d.iconColor, 14)}</span> <span>${d.name}</span></div>`)
         .join('')
     : '<div class="nav-item nested muted" data-route="/tools">No favorites yet — star a tool</div>';
+  hydrateSvgIconsAsync(list);
   list.querySelectorAll('[data-tool]').forEach((node) => {
     node.addEventListener('click', () => {
       const tool = (node as HTMLElement).dataset.tool!;

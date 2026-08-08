@@ -2,6 +2,8 @@ import { api } from '../api';
 import { state } from '../state';
 import { toast } from '../ui/toast';
 import { convertWithPlugin } from '../plugins/manager';
+import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
+import { svgIcons } from '../ui/svg-icons';
 import type { MarketplacePlugin, ConvertInput } from '../types';
 
 export function renderModeration(): HTMLElement {
@@ -61,6 +63,7 @@ export function renderModeration(): HTMLElement {
       return;
     }
     list.innerHTML = shown.map(pluginBlock).join('');
+    hydrateSvgIconsAsync(list);
     list.querySelectorAll('[data-mod-code]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-mod-code')!;
@@ -116,7 +119,7 @@ function pluginBlock(p: MarketplacePlugin): string {
   return `
     <div class="mod-plugin" data-id="${p.id}">
       <div class="head">
-        <div class="picon">${p.icon || '🧩'}</div>
+        <div class="picon">${renderIcon(p.icon || svgIcons.plugin, p.iconColor, 22)}</div>
         <div style="flex:1;min-width:0">
           <div class="pname">${p.name} <span style="color:var(--text-muted);font-weight:400;font-size:12px">v${p.version}</span></div>
           <div class="pauthor">by ${p.author} · ${p.inputs.map((i) => i.toUpperCase()).join(', ')} → ${p.outputs.map((o) => o.toUpperCase()).join(', ')}</div>
@@ -144,7 +147,7 @@ function codeModal(p: MarketplacePlugin): void {
       <div style="display:flex;align-items:center;gap:10px">
         <h2>${p.name} <span style="color:var(--text-muted);font-weight:400;font-size:13px">v${p.version} by ${p.author}</span></h2>
         <span style="flex:1"></span>
-        <button class="icon-btn" data-close style="color:var(--text-muted)">✕</button>
+        <button class="icon-btn" data-close style="color:var(--text-muted)">&#10005;</button>
       </div>
       <pre class="code-view" spellcheck="false">${escapeHtml(p.entry)}</pre>
       <div class="modal-actions">
@@ -173,6 +176,7 @@ async function runTest(p: MarketplacePlugin, btn: HTMLButtonElement): Promise<vo
         description: p.description,
         author: p.author,
         icon: p.icon,
+        iconColor: p.iconColor,
         inputs: p.inputs,
         outputs: p.outputs,
         entry: p.entry,
@@ -183,12 +187,12 @@ async function runTest(p: MarketplacePlugin, btn: HTMLButtonElement): Promise<vo
     const size = out.data.byteLength;
     const preview = previewOutput(out);
     if (resultEl) {
-      resultEl.innerHTML = `<div class="mod-test-pass">✓ Ran successfully — produced <b>${out.name}</b> (${size} bytes).<br/>${preview}</div>`;
+      resultEl.innerHTML = `<div class="mod-test-pass">&#10003; Ran successfully — produced <b>${out.name}</b> (${size} bytes).<br/>${preview}</div>`;
     }
     toast('Test passed', 'success');
   } catch (err) {
     if (resultEl) {
-      resultEl.innerHTML = `<div class="mod-test-fail">✗ Test failed: ${escapeHtml(err instanceof Error ? err.message : String(err))}</div>`;
+      resultEl.innerHTML = `<div class="mod-test-fail">&#10007; Test failed: ${escapeHtml(err instanceof Error ? err.message : String(err))}</div>`;
     }
     toast('Test failed', 'error');
   } finally {

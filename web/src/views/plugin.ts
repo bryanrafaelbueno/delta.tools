@@ -4,6 +4,8 @@ import { pluginManager } from '../plugins/manager';
 import type { MarketplacePlugin } from '../types';
 import { toast } from '../ui/toast';
 import { state } from '../state';
+import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
+import { svgIcons } from '../ui/svg-icons';
 
 export function renderPlugin(id: string): HTMLElement {
   const el = document.createElement('div');
@@ -31,6 +33,7 @@ export function renderPlugin(id: string): HTMLElement {
       const local = await pluginStore.get(id);
       if (local) {
         panel.innerHTML = localCard(local);
+        hydrateSvgIconsAsync(panel);
       } else {
         panel.innerHTML = `<div class="empty">Plugin not found.</div>`;
       }
@@ -39,12 +42,12 @@ export function renderPlugin(id: string): HTMLElement {
     const installed = await pluginStore.isInstalled(id);
     panel.innerHTML = `
       <div style="display:flex;gap:16px;align-items:flex-start">
-        <div class="picon" style="width:56px;height:56px;font-size:28px;border-radius:14px;background:var(--hover);display:flex;align-items:center;justify-content:center">${plugin.icon || '🧩'}</div>
+        <div class="picon" style="width:56px;height:56px;border-radius:14px;background:var(--hover);display:flex;align-items:center;justify-content:center">${renderIcon(plugin.icon || svgIcons.plugin, plugin.iconColor, 28)}</div>
         <div style="flex:1">
           <div style="font-size:19px;font-weight:700">${plugin.name}</div>
           <div style="color:var(--text-muted);font-size:12.5px">by ${plugin.author} · v${plugin.version} · ${plugin.downloads ?? 0} installs</div>
         </div>
-        <button class="btn btn-primary" id="install-btn" ${installed ? 'disabled' : ''}>${installed ? '✓ Installed' : 'Install'}</button>
+        <button class="btn btn-primary" id="install-btn" ${installed ? 'disabled' : ''}>${installed ? 'Installed' : 'Install'}</button>
       </div>
       <div style="height:8px"></div>
       <div style="color:var(--text-secondary);font-size:13.5px">${plugin.description}</div>
@@ -57,6 +60,7 @@ export function renderPlugin(id: string): HTMLElement {
         ? `<div style="height:12px"></div><button class="btn btn-danger" id="delete-btn" style="align-self:flex-start">Delete from marketplace</button>`
         : ''}
     `;
+    hydrateSvgIconsAsync(panel);
     panel.querySelector('#install-btn')?.addEventListener('click', async () => {
       try {
         await pluginStore.install(plugin!);
@@ -65,7 +69,7 @@ export function renderPlugin(id: string): HTMLElement {
         toast(`Installed "${plugin!.name}"`, 'success');
         const btn = panel.querySelector('#install-btn') as HTMLButtonElement;
         btn.disabled = true;
-        btn.textContent = '✓ Installed';
+        btn.textContent = 'Installed';
       } catch (err) {
         toast(err instanceof Error ? err.message : 'Install failed', 'error');
       }
@@ -88,7 +92,7 @@ export function renderPlugin(id: string): HTMLElement {
 function localCard(local: { id: string; name: string; version: string; description: string; author: string; icon: string; inputs: string[]; outputs: string[] }): string {
   return `
     <div style="display:flex;gap:16px;align-items:flex-start">
-      <div class="picon" style="width:56px;height:56px;font-size:28px;border-radius:14px;background:var(--hover);display:flex;align-items:center;justify-content:center">${local.icon || '🧩'}</div>
+      <div class="picon" style="width:56px;height:56px;border-radius:14px;background:var(--hover);display:flex;align-items:center;justify-content:center">${renderIcon(local.icon || svgIcons.plugin, undefined, 28)}</div>
       <div style="flex:1">
         <div style="font-size:19px;font-weight:700">${local.name}</div>
         <div style="color:var(--text-muted);font-size:12.5px">by ${local.author} · v${local.version} · installed locally</div>

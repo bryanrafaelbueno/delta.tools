@@ -4,6 +4,7 @@ import { state } from '../state';
 import { api } from '../api';
 import { toast } from '../ui/toast';
 import { registry } from '../converters/registry';
+import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
 
 export function renderDashboard(): HTMLElement {
   const el = document.createElement('div');
@@ -62,6 +63,7 @@ export function renderDashboard(): HTMLElement {
       return;
     }
     results.innerHTML = matches.map(resultRow).join('');
+    hydrateSvgIconsAsync(results);
     results.querySelectorAll('.search-result').forEach((row) => {
       row.addEventListener('click', () => {
         window.location.hash = `/tool/${(row as HTMLElement).dataset.tool}`;
@@ -100,7 +102,7 @@ export function resultRow(def: ConverterDef): string {
   const fav = state.isFavorite(def.id);
   return `
     <div class="search-result" data-tool="${def.id}">
-      <span class="search-result-icon">${def.icon}</span>
+      <span class="search-result-icon">${renderIcon(def.icon, def.iconColor, 18)}</span>
       <div class="search-result-info">
         <div class="search-result-name">${def.name}</div>
         <div class="search-result-desc">${def.description}</div>
@@ -149,7 +151,7 @@ export function toolCard(def: ConverterDef): string {
   return `
     <div class="tool-card" data-tool-id="${def.id}">
       <div class="tool-card-top">
-        <div class="icon">${def.icon}</div>
+        <div class="icon">${renderIcon(def.icon, def.iconColor, 20)}</div>
         <button class="fav-btn ${fav ? 'fav-on' : ''}" data-fav="${def.id}" title="${fav ? 'Remove from favorites' : 'Add to favorites'}">${icon('star')}</button>
       </div>
       <div class="name">${def.name}${multi}</div>

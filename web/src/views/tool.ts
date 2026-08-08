@@ -8,6 +8,7 @@ import { toast } from '../ui/toast';
 import { state } from '../state';
 import { api } from '../api';
 import { icon } from '../ui/icons';
+import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
 
 interface JobState {
   name: string;
@@ -38,14 +39,14 @@ export function renderTool(id: string): HTMLElement {
   el.innerHTML = `
     <div>
       <div style="display:flex;align-items:center;gap:12px">
-        <div class="page-title">${def.icon} ${def.name}</div>
+        <div style="display:inline-flex;align-items:center;gap:8px" class="page-title"><span>${renderIcon(def.icon, def.iconColor, 22)}</span> ${def.name}</div>
         <button class="icon-btn fav-toggle ${state.isFavorite(def.id) ? 'fav-on' : ''}" id="fav-toggle" title="${state.isFavorite(def.id) ? 'Remove from favorites' : 'Add to favorites'}">${icon('star')}</button>
       </div>
       <div class="page-sub">${def.description} — 100% client-side</div>
     </div>
     <div class="panel">
       <div class="dropzone" id="dropzone">
-        <div class="dz-icon">${def.icon}</div>
+        <div class="dz-icon">${renderIcon(def.icon, def.iconColor, 30)}</div>
         <div class="dz-title">Drop your ${def.from.toUpperCase()} ${isMulti ? 'files' : 'file'} here</div>
         <div class="dz-sub">or click to browse · max ${isMulti ? '10' : '1'} ${def.from.toUpperCase()}</div>
         <input type="file" id="file-input" ${isMulti ? 'multiple' : ''} accept=".${def.from},${acceptType(def.from)}" />
@@ -63,6 +64,7 @@ export function renderTool(id: string): HTMLElement {
     </div>
   `;
 
+  hydrateSvgIconsAsync(el);
   const dz = el.querySelector('#dropzone') as HTMLElement;
   const input = el.querySelector('#file-input') as HTMLInputElement;
 
@@ -139,7 +141,7 @@ export function renderTool(id: string): HTMLElement {
       </div>
       <span class="arrow-icon">→</span>
       <div class="progress-track"><div class="progress-fill" style="width:0%"></div></div>
-      <button class="btn btn-ghost" data-action="download" style="display:none;padding:6px 12px">${'⬇'} Download</button>
+      <button class="btn btn-ghost" data-action="download" style="display:none;padding:6px 12px">Download</button>
       <button class="btn btn-danger" data-action="clear" style="padding:6px 12px">Clear</button>
     `;
     row.querySelector('[data-action="clear"]')!.addEventListener('click', () => {
@@ -247,7 +249,7 @@ export function renderTool(id: string): HTMLElement {
         <div class="file-name">${escapeHtml(result.name)}</div>
         <div class="file-size">${formatBytes(result.data.byteLength)}</div>
       </div>
-      <span class="arrow-icon">✓</span>
+      <span class="arrow-icon">&#10003;</span>
       <button class="btn btn-primary" data-action="download-result" style="margin-left:auto">Download</button>
     `;
     row.querySelector('[data-action="download-result"]')!.addEventListener('click', () => {
