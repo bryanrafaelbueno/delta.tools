@@ -17,16 +17,6 @@
   <img src="https://img.shields.io/badge/platform-web-lightgrey"/>
 </p>
 
-## 📦 Deploy (Web App)
-
-A **live version is available** — no installation required, just open your browser:
-
-➡️ https://github.com/bryanrafaelbueno/delta.tools
-
-You can also self-host: build from source and serve both the web app and API.
-
----
-
 ## ✨ What is Delta.tools?
 
 **Delta.tools** is a file conversion platform that runs 100% in your browser.
