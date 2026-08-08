@@ -2,16 +2,13 @@ import { state } from '../state';
 import { icon, logo } from './icons';
 import { registry } from '../converters/registry';
 import { renderIcon, hydrateSvgIconsAsync } from './icon-render';
+import type { ConverterDef } from '../types';
 
 export function renderSidebar(): HTMLElement {
   const el = document.createElement('aside');
   el.className = 'sidebar';
 
-  const favorites = state.favorites
-    .map((id) => registry.get(id))
-    .filter((c) => c !== undefined)
-    .map((c) => c.def)
-    .slice(0, 8);
+  const favorites = validFavorites().slice(0, 8);
 
   el.innerHTML = `
     <div class="sidebar-section">
@@ -43,7 +40,8 @@ export function renderSidebar(): HTMLElement {
             : '<div class="nav-item nested muted" data-route="/auth">Sign in to save favorites</div>'
         }
       </div>
-    </div>    <div class="sidebar-section">
+    </div>
+    <div class="sidebar-section">
       <div class="nav-item" data-action="theme">${icon('sun')} <span>Theme</span></div>
       <div class="nav-item" data-route="/settings">${icon('settings')} <span>Settings</span></div>
       <div class="nav-separator"></div>
@@ -111,15 +109,11 @@ export function updateSidebarAuth(): void {
 }
 
 export function updateSidebarFavorites(): void {
+  const favorites = validFavorites().slice(0, 8);
   const badge = document.getElementById('favorites-count');
-  if (badge) badge.textContent = state.token ? String(state.favorites.length) : '';
+  if (badge) badge.textContent = state.token ? String(favorites.length) : '';
   const list = document.getElementById('sidebar-favorites');
   if (!list) return;
-  const favorites = state.favorites
-    .map((id) => registry.get(id))
-    .filter((c) => c !== undefined)
-    .map((c) => c.def)
-    .slice(0, 8);
   list.innerHTML = favorites.length
     ? favorites
         .map((d) => `<div class="nav-item nested" data-tool="${d.id}"><span class="fav-icon">${renderIcon(d.icon, d.iconColor, 14)}</span> <span>${d.name}</span></div>`)
@@ -138,6 +132,16 @@ export function updateSidebarFavorites(): void {
       window.location.hash = (node as HTMLElement).dataset.route!;
     });
   });
+}
+
+// Favorites whose tool still exists in the registry. The badge must match the
+// visible list — stale ids (removed converters, uninstalled plugins) are
+// dropped from both, otherwise a phantom "1" appears with no favorites shown.
+function validFavorites(): ConverterDef[] {
+  return state.favorites
+    .map((id) => registry.get(id))
+    .filter((c) => c !== undefined)
+    .map((c) => c.def);
 }
 
 export function isLoggedIn(): boolean {

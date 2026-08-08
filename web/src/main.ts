@@ -118,13 +118,16 @@ function render(): void {
   const active = route.name === 'home' ? '/' : `/${route.name}`;
   document.querySelectorAll('.nav-item[data-route]').forEach((n) => {
     const href = (n as HTMLElement).dataset.route;
-    n.classList.toggle(
-      'active',
-      href === active ||
-        (route.name === 'tools' && href === '/tools' && route.tab !== 'manage') ||
-        (route.name === 'tools' && href === '/manage' && route.tab === 'manage') ||
-        (route.name === 'tool' && (href === '/tools' || href === '/manage')),
-    );
+    let isActive: boolean;
+    if (route.name === 'tools') {
+      // one page with two tabs: only the matching sidebar item is highlighted
+      isActive = route.tab === 'manage' ? href === '/manage' : href === '/tools';
+    } else if (route.name === 'tool') {
+      isActive = href === '/tools' || href === '/manage';
+    } else {
+      isActive = href === active;
+    }
+    n.classList.toggle('active', isActive);
   });
 }
 
