@@ -20,13 +20,46 @@
 
 .tool-card:hover {
   background: var(--card-hover);
-  border-color: var(--accent);
+  border-color: var(--hover-strong);
   transform: translateY(-1px);
+}
+
+.tool-card .tool-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .tool-card .icon {
   font-size: 20px;
   line-height: 1;
+}
+
+.fav-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+
+.fav-btn:hover {
+  background: var(--hover);
+  color: var(--text-secondary);
+}
+
+.fav-btn.fav-on {
+  color: #ffd166;
+}
+
+.fav-btn svg {
+  width: 15px;
+  height: 15px;
 }
 
 .tool-card .name {
@@ -58,8 +91,8 @@
 }
 
 .badge.accent {
-  background: var(--accent-soft);
-  color: var(--accent-hover);
+  background: var(--hover);
+  color: var(--text);
   border-color: transparent;
 }
 
@@ -77,7 +110,7 @@
 
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-text);
 }
 
 .btn-primary:hover {
@@ -122,8 +155,8 @@
 
 .dropzone:hover,
 .dropzone.dragover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--text-secondary);
+  background: var(--hover);
 }
 
 .dropzone .dz-icon {
@@ -348,7 +381,7 @@
 }
 
 .plugin-card:hover {
-  border-color: var(--accent);
+  border-color: var(--hover-strong);
 }
 
 .plugin-card .head {
@@ -452,7 +485,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--bg);
   transition: transform var(--transition);
 }
 

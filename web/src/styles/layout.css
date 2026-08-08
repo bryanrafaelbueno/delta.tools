@@ -1,4 +1,4 @@
-/* Layout: sidebar + main area */
+/* Layout: sidebar + main area (from Figma: Delta.tools) */
 
 .sidebar {
   width: var(--sidebar-width);
@@ -6,7 +6,7 @@
   background: var(--sidebar);
   border-radius: var(--radius-md);
   margin: 10px 0 10px 10px;
-  padding: 10px 0;
+  padding: 3px 0 8px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -15,7 +15,7 @@
 }
 
 .sidebar-section {
-  padding: 4px 10px;
+  padding: 4px 8px;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -24,54 +24,60 @@
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 9px;
+  padding: 9px 10px;
   font-weight: 700;
   font-size: 15px;
-  color: var(--text);
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .sidebar-logo svg {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
 }
 
 .sidebar-search {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: var(--hover);
   border-radius: var(--radius-sm);
-  padding: 6px 10px;
-  margin: 4px 10px 8px;
-  color: var(--text-muted);
+  padding: 7px 10px;
+  margin: 4px 2px 6px;
+  color: var(--text);
   font-size: 13px;
   cursor: text;
+}
+
+.sidebar-search svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.85;
 }
 
 .sidebar-search .slash {
   margin-left: auto;
   font-size: 11px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  background: var(--hover);
+  border-radius: 3px;
   padding: 0 5px;
+  color: var(--text-secondary);
 }
 
-.nav-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  padding: 8px 12px 4px;
+.nav-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 6px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+  color: var(--text);
   cursor: pointer;
   user-select: none;
   font-size: 13.5px;
@@ -80,12 +86,10 @@
 
 .nav-item:hover {
   background: var(--hover);
-  color: var(--text);
 }
 
 .nav-item.active {
-  background: var(--accent-soft);
-  color: var(--accent-hover);
+  background: var(--hover);
   font-weight: 600;
 }
 
@@ -93,20 +97,69 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .nav-item.nested {
-  padding-left: 30px;
+  padding-left: 36px;
+  font-size: 12.5px;
+}
+
+.nav-item.nested .fav-icon {
   font-size: 13px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.nav-item.nested.muted {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.nav-item.nested.muted:hover {
+  color: var(--text-secondary);
+}
+
+.fav-toggle {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+}
+
+.fav-toggle:hover {
+  background: var(--hover);
+  color: var(--text-secondary);
+}
+
+.fav-toggle.fav-on {
+  color: #ffd166;
+}
+
+.fav-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.nav-item .badge {
+  margin-left: auto;
 }
 
 .nav-profile {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
+  gap: 9px;
+  padding: 9px 10px;
   border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: background var(--transition);
 }
 
 .nav-profile:hover {
@@ -117,12 +170,12 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent-hover);
+  background: var(--hover-strong);
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12px;
   flex-shrink: 0;
 }
@@ -133,7 +186,7 @@
 }
 
 .nav-profile .name {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -155,102 +208,110 @@
   min-width: 0;
 }
 
-.topbar {
+.content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+/* Hero (dashboard, per Figma) */
+.view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 0;
+}
+
+.hero .hero-logo {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 24px 12px;
 }
 
-.topbar-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  max-width: 480px;
-  background: var(--hover);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 7px 12px;
-  color: var(--text-muted);
+.hero .hero-logo svg {
+  width: 60px;
+  height: 60px;
 }
 
-.topbar-search:focus-within {
-  border-color: var(--accent);
-}
-
-.topbar-search input {
-  flex: 1;
-  border: none;
-  background: none;
-  padding: 0;
+.hero .hero-title {
+  font-size: 30px;
+  font-weight: 700;
   color: var(--text);
 }
 
-.topbar-search input::placeholder {
-  color: var(--text-muted);
-}
-
-.topbar-search .slash {
-  font-size: 11px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0 5px;
-}
-
-.topbar-actions {
+.hero-search {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.icon-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
+  gap: 10px;
+  width: min(560px, 100%);
+  background: var(--hover);
+  border-radius: var(--radius-md);
+  padding: 11px 14px;
   color: var(--text-secondary);
   transition: background var(--transition);
 }
 
-.icon-btn:hover {
-  background: var(--hover);
+.hero-search:focus-within {
+  background: var(--hover-strong);
+}
+
+.hero-search svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+.hero-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 14.5px;
   color: var(--text);
 }
 
-.icon-btn svg {
-  width: 16px;
-  height: 16px;
+.hero-search input::placeholder {
+  color: var(--text-muted);
 }
 
-.content {
-  flex: 1;
-  padding: 8px 24px 24px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  min-height: 0;
+.hero-search .slash {
+  font-size: 12px;
+  background: var(--hover-strong);
+  border-radius: 4px;
+  padding: 1px 7px;
+  color: var(--text-secondary);
 }
 
+/* Page headers (per Figma: Marketplace title) */
 .page-title {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 600;
   color: var(--text);
 }
 
 .page-sub {
   color: var(--text-muted);
   font-size: 13px;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .panel {
   background: var(--panel);
-  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 18px;
   transition: background var(--transition);
