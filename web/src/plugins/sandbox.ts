@@ -29,17 +29,17 @@ const SANDBOX_HTML = `
           throw new Error('Plugin must export a convert(input) function');
         }
         converter = mod.convert;
-        self.postMessage({ kind: 'ready' });
+        parent.postMessage({ kind: 'ready' }, '*');
       } catch (err) {
-        self.postMessage({ kind: 'error', payload: String(err && err.message || err) });
+        parent.postMessage({ kind: 'error', payload: String(err && err.message || err) }, '*');
       }
     } else if (msg.kind === 'convert' && converter) {
       try {
         const input = msg.payload.input;
         const result = await converter(input);
-        self.postMessage({ kind: 'result', reqId: msg.reqId, payload: result });
+        parent.postMessage({ kind: 'result', reqId: msg.reqId, payload: result }, '*');
       } catch (err) {
-        self.postMessage({ kind: 'error', reqId: msg.reqId, payload: String(err && err.message || err) });
+        parent.postMessage({ kind: 'error', reqId: msg.reqId, payload: String(err && err.message || err) }, '*');
       }
     }
   });
@@ -60,9 +60,12 @@ export class Sandbox {
     this.iframe.setAttribute('sandbox', 'allow-scripts');
     this.iframe.srcdoc = SANDBOX_HTML;
     document.body.appendChild(this.iframe);
-
     const contentWindow = this.iframe.contentWindow!;
-    contentWindow.addEventListener('message', (event: MessageEvent<SandboxMessage>) => {
+
+    // Sandboxed (opaque origin) frames are cross-origin: listen on the parent
+    // window and filter messages by event.source instead.
+    const onMessage = (event: MessageEvent<SandboxMessage>): void => {
+      if (event.source !== contentWindow) return;
       const msg = event.data;
       const reqId = msg.reqId;
       if (msg.kind === 'result' && reqId != null) {
@@ -80,19 +83,21 @@ export class Sandbox {
           }
         }
       }
-    });
+    };
+    window.addEventListener('message', onMessage);
 
     this.ready = new Promise((resolve, reject) => {
-      const onMsg = (event: MessageEvent<SandboxMessage>) => {
+      const onReady = (event: MessageEvent<SandboxMessage>): void => {
+        if (event.source !== contentWindow) return;
         if (event.data?.kind === 'ready') {
-          contentWindow.removeEventListener('message', onMsg);
+          window.removeEventListener('message', onReady);
           resolve();
         } else if (event.data?.kind === 'error') {
-          contentWindow.removeEventListener('message', onMsg);
+          window.removeEventListener('message', onReady);
           reject(new Error(String(event.data.payload)));
         }
       };
-      contentWindow.addEventListener('message', onMsg);
+      window.addEventListener('message', onReady);
       this.iframe.addEventListener('load', () => {
         contentWindow.postMessage({ kind: 'load', payload: { code: manifest.entry } }, '*');
       });
@@ -103,7 +108,8 @@ export class Sandbox {
     await this.ready;
   }
 
-  convert(input: ConvertInput): Promise<ConvertResult> {
+  async convert(input: ConvertInput): Promise<ConvertResult> {
+    await this.ready;
     return new Promise((resolve, reject) => {
       const reqId = this.nextId++;
       this.pending.set(reqId, { resolve, reject });

@@ -50,7 +50,8 @@ export function renderMarketplace(): HTMLElement {
       const installed = new Set((await pluginStore.list()).map((p) => p.id));
       grid.innerHTML = plugins.map((p) => pluginCard(p, installed.has(p.id))).join('');
       grid.querySelectorAll('[data-install]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
           const id = btn.getAttribute('data-install')!;
           const plugin = plugins.find((p) => p.id === id)!;
           try {
@@ -168,7 +169,8 @@ function publishModal(): void {
       await api.publishPlugin(manifest);
       toast('Plugin published to the marketplace!', 'success');
       overlay.remove();
-      window.location.hash = '/marketplace';
+      window.location.hash = '/settings';
+      setTimeout(() => (window.location.hash = '/marketplace'), 30);
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Publish failed', 'error');
     }

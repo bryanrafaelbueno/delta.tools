@@ -44,6 +44,7 @@ export function renderDashboard(): HTMLElement {
     if (list.length === 0) {
       grid.innerHTML = `<div class="empty">No tools match your search.</div>`;
     }
+    bindToolCards(grid);
   }
 
   filter.addEventListener('click', (e) => {
