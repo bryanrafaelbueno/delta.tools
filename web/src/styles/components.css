@@ -966,6 +966,13 @@ span.svg-icon img {
 
 /* Mobile: top bar + sidebar drawer + touch-friendly layout */
 @media (max-width: 720px) {
+  /* Stack top bar above the content; otherwise the topbar (a flex item of
+     the row-oriented #app) stretches to full height and squeezes .main
+     into a narrow column. */
+  #app {
+    flex-direction: column;
+  }
+
   .sidebar {
     display: none;
   }

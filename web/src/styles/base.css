@@ -73,7 +73,11 @@ body {
 }
 
 #app {
+  /* dvh tracks the on-screen viewport on phones, so the bottom of the page
+     is never trapped behind the browser URL bar (100vh is the taller
+     "large viewport" and would cut the tail off on mobile). */
   height: 100vh;
+  height: 100dvh;
   display: flex;
   overflow: hidden;
 }
