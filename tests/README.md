@@ -7,11 +7,13 @@ and API, verifying the core flows end to end:
 2. Sidebar navigation
 3. Tool search
 4. Image conversion (PNG → JPG, canvas)
-5. Marketplace loads seeded plugins
-6. Plugin install + appears under "Your tools"
-7. Sandboxed plugin actually converts a file
+5. Marketplace moderation flow — the test publishes its own plugin through the
+   real API (register → publish → promote → approve) so it runs on any
+   database state, including a fresh one
+6. Plugin install + appears under "Manage plugins"
+7. Sandboxed plugin actually converts a file (output verified)
 8. Account registration
-9. Plugin publishing
+9. Plugin publishing (goes to moderation, hidden until approved)
 10. Theme toggle
 
 ## Running
