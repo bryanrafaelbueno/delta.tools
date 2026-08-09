@@ -8,7 +8,10 @@ import { fileURLToPath } from 'node:url';
 export const iconsRouter = Router();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const cacheDir = join(__dirname, '..', '..', 'data', 'icon-cache');
+// /tmp on Vercel (ephemeral), ./data locally
+const cacheDir = process.env.VERCEL
+  ? join('/tmp', 'icon-cache')
+  : join(__dirname, '..', '..', 'data', 'icon-cache');
 mkdirSync(cacheDir, { recursive: true });
 
 const mem = new Map(); // url -> { at, body, type }
