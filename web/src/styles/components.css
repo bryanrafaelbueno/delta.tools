@@ -113,12 +113,12 @@
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--brand);
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
+  background: var(--brand-strong);
 }
 
 .btn-ghost {
@@ -144,6 +144,22 @@
   cursor: not-allowed;
 }
 
+.segment button .tab-icon {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.segment button .tab-icon span.svg-icon {
+  display: inline-flex;
+}
+
+.segment button .tab-icon .svg-icon img,
+.segment button .tab-icon span {
+  vertical-align: middle;
+}
+
 .dropzone {
   border: 1.5px dashed var(--border);
   border-radius: var(--radius-lg);
@@ -159,8 +175,8 @@
 
 .dropzone:hover,
 .dropzone.dragover {
-  border-color: var(--text-secondary);
-  background: var(--hover);
+  border-color: var(--brand);
+  background: var(--brand-soft);
 }
 
 .dropzone .dz-icon {
@@ -926,7 +942,6 @@ span.svg-icon img {
   background: var(--card);
   color: var(--text);
 }
-
 @media (max-width: 720px) {
   .sidebar {
     display: none;

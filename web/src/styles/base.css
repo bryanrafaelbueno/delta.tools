@@ -15,6 +15,10 @@
   --accent-hover: rgba(255, 255, 255, 0.85);
   --accent-soft: rgba(255, 255, 255, 0.05);
   --accent-text: #000000;
+  --brand: #3b82f6;
+  --brand-strong: #2563eb;
+  --brand-soft: rgba(59, 130, 246, 0.16);
+  --brand-grad: linear-gradient(120deg, #3b82f6 0%, #8b5cf6 100%);
   --danger: #ff5c5c;
   --success: #4ade80;
   --radius-sm: 7px;
@@ -41,6 +45,10 @@
   --accent-hover: rgba(0, 0, 0, 0.75);
   --accent-soft: rgba(0, 0, 0, 0.05);
   --accent-text: #ffffff;
+  --brand: #2563eb;
+  --brand-strong: #1d4ed8;
+  --brand-soft: rgba(37, 99, 235, 0.12);
+  --brand-grad: linear-gradient(120deg, #2563eb 0%, #7c3aed 100%);
 }
 
 * {

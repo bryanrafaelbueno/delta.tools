@@ -21,6 +21,8 @@ const icons: Record<string, string> = {
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
   folder: '<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
 };
 
 // Icons that are filled silhouettes (from Iconscout) instead of strokes

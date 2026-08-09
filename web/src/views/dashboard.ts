@@ -1,4 +1,4 @@
-import { CATEGORIES, type ConverterDef } from '../types';
+import { CATEGORIES, type Category, type ConverterDef } from '../types';
 import { icon, logo } from '../ui/icons';
 import { state } from '../state';
 import { api } from '../api';
@@ -6,23 +6,100 @@ import { toast } from '../ui/toast';
 import { registry } from '../converters/registry';
 import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
 
+const HOME_CATEGORIES: Category[] = ['image', 'audio', 'video', 'document', 'archive', 'text'];
+
+// Curated "everyone uses these" converters, shown on the dashboard so the page
+// reads as a file-converter tool at first glance instead of a chat search box.
+const POPULAR = [
+  'img-png-jpg',
+  'img-jpg-png',
+  'aud-mp3-wav',
+  'vid-mp4-mov',
+  'pdf-img-png',
+  'img-pdf',
+  'pdf-merge',
+  'txt-json-pretty',
+  'arc-zip-tar',
+  'repair-vid-mkv',
+];
+
+const QUICK_CHIPS: Array<[string, string]> = [
+  ['PNG → JPG', 'img-png-jpg'],
+  ['Video → MP4', 'vid-mov-mp4'],
+  ['PDF → Images', 'pdf-img-png'],
+  ['Images → PDF', 'img-pdf'],
+  ['JSON pretty', 'txt-json-pretty'],
+  ['Repair old video', 'repair-vid-mkv'],
+];
+
 export function renderDashboard(): HTMLElement {
   const el = document.createElement('div');
-  el.className = 'view';
+  el.className = 'view home';
+
+  const popular = POPULAR.map((id) => registry.get(id)).filter((c) => c !== undefined).map((c) => c.def);
+  const byCategory = new Map<Category, ConverterDef[]>();
+  for (const cat of HOME_CATEGORIES) {
+    byCategory.set(
+      cat,
+      registry.all().filter((c) => c.def.category === cat).map((c) => c.def),
+    );
+  }
 
   el.innerHTML = `
     <div class="hero">
       <div class="hero-center">
         <div class="hero-logo">${logo()}<span class="hero-title">Delta.tools</span></div>
+        <h1 class="hero-headline">Convert files. <span class="hero-grad">Right in your browser.</span></h1>
+        <p class="hero-sub">Images, audio, video, PDFs and archives — private, free and instant. No uploads, no waiting.</p>
         <div class="hero-search">
           ${icon('search')}
-          <input type="text" id="hero-search-input" placeholder="Search for some tool..." autocomplete="off" />
+          <input type="text" id="hero-search-input" placeholder="Search 140+ tools… e.g. wav, pdf, base64" autocomplete="off" />
           <span class="slash">/</span>
         </div>
         <div class="search-results" id="search-results" hidden></div>
+        <div class="hero-chips">
+          ${QUICK_CHIPS.map(([label, id]) => `<button class="chip" data-quick="${id}">${label}</button>`).join('')}
+        </div>
       </div>
     </div>
+
+    <div class="home-sections">
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2>What do you want to convert?</h2>
+          <a class="home-link" href="#/browse">Browse all tools →</a>
+        </div>
+        <div class="home-cats">
+          ${HOME_CATEGORIES.map((cat) => {
+            const count = byCategory.get(cat)?.length ?? 0;
+            return `
+              <a class="cat-card" data-cat="${cat}" href="#/browse/${cat}">
+                <span class="cat-icon">${renderIcon(CATEGORIES[cat].icon, undefined, 22)}</span>
+                <span class="cat-name">${CATEGORIES[cat].label}s</span>
+                <span class="cat-count">${count} tools</span>
+              </a>
+            `;
+          }).join('')}
+        </div>
+      </section>
+
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2>Popular tools</h2>
+        </div>
+        <div class="tool-grid">
+          ${popular.map(toolCard).join('')}
+        </div>
+      </section>
+
+    </div>
   `;
+
+  hydrateSvgIconsAsync(el);
+
+  // Popular-tools grid: tool cards are inert until their click handlers are
+  // bound, so wire them up along with the fav buttons.
+  bindToolCards(el);
 
   const search = el.querySelector('#hero-search-input') as HTMLInputElement;
   const results = el.querySelector('#search-results') as HTMLElement;
@@ -93,6 +170,19 @@ export function renderDashboard(): HTMLElement {
         });
       if (matches[0]) window.location.hash = `/tool/${matches[0].id}`;
     }
+  });
+
+  el.querySelectorAll('.chip[data-quick]').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      window.location.hash = `/tool/${chip.getAttribute('data-quick')}`;
+    });
+  });
+
+  const grid = el.querySelector('.home-cats');
+  grid?.querySelectorAll('.cat-card[data-cat]').forEach((card) => {
+    card.addEventListener('click', () => {
+      window.location.hash = `/browse/${card.getAttribute('data-cat')}`;
+    });
   });
 
   return el;

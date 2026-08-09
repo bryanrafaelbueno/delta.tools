@@ -15,6 +15,7 @@ import { renderProfile } from './views/profile';
 import { renderModeration } from './views/moderation';
 import { renderTool } from './views/tool';
 import { renderPlugin } from './views/plugin';
+import { renderBrowse } from './views/browse';
 import { pluginManager } from './plugins/manager';
 
 const app = document.getElementById('app')!;
@@ -54,6 +55,8 @@ function routeContent(route: Route): HTMLElement {
       return renderPlugin(route.id);
     case 'recent':
       return renderTool(route.id);
+    case 'browse':
+      return renderBrowse(route.category);
   }
 }
 
