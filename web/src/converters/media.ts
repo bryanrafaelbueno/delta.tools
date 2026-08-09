@@ -73,10 +73,16 @@ function describeFailure(logs: string[]): string {
 }
 
 function friendlyError(detail: string, logs: string[]): Error {
-  const unreadable = /invalid data found when processing input|moov atom not found|does not look like/i.test(
-    `${detail} ${logs.join(' ')}`,
-  );
-  if (unreadable) {
+  const trace = `${detail} ${logs.join(' ')}`;
+  // AV1 cannot be decoded by the ffmpeg.wasm core (no dav1d/libaom) and the
+  // MOV muxer rejects AV1 stream copies, so MP4(AV1)→MOV can never succeed.
+  // The file is NOT corrupt — this is a codec limitation.
+  if (/av1/i.test(trace) && /sequence header|pixel format|codec parameters|hardware|av1 only supported/i.test(trace)) {
+    return new Error(
+      'This video uses the AV1 codec, which the in-browser conversion engine cannot decode, so it cannot be re-encoded to MOV. Try MP4 → MKV instead — it converts the same file without re-encoding (stream copy).',
+    );
+  }
+  if (/invalid data found when processing input|moov atom not found|does not look like/i.test(trace)) {
     return new Error(
       'Your file could not be read by the converter. It is likely corrupt or an incomplete download — check that it plays in a video player, then download it again.',
     );
