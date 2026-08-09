@@ -571,6 +571,67 @@
   margin: 0 auto;
 }
 
+/* Mobile top bar + sidebar drawer (see main.ts renderShell) */
+.mobile-topbar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.menu-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  background: var(--hover);
+  transition: background var(--transition), color var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu-btn:hover,
+.menu-btn:active {
+  background: var(--hover-strong);
+  color: var(--text);
+}
+
+.menu-btn svg {
+  width: 19px;
+  height: 19px;
+}
+
+.mobile-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.mobile-logo svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 54;
+}
+
+.mobile-backdrop[hidden] {
+  display: none;
+}
+
 /* Page headers (per Figma: Marketplace title) */
 .page-title {
   font-size: 19px;

@@ -6,6 +6,7 @@ import { parseHash, type Route } from './router';
 import { registerBuiltinConverters } from './converters';
 import { state } from './state';
 import { api } from './api';
+import { icon, logo } from './ui/icons';
 import { renderDashboard } from './views/dashboard';
 import { renderMarketplace } from './views/marketplace';
 import { renderMyPlugins } from './views/myplugins';
@@ -22,15 +23,49 @@ const app = document.getElementById('app')!;
 
 function renderShell(): void {
   app.innerHTML = '';
+  // Mobile-only top bar (hidden on desktop via CSS). On small screens the
+  // sidebar becomes a drawer opened from here, so navigation stays usable.
+  const topbar = document.createElement('div');
+  topbar.className = 'mobile-topbar';
+  topbar.innerHTML = `
+    <button class="menu-btn" id="menu-btn" aria-label="Open menu">${icon('menu')}</button>
+    <div class="mobile-logo" data-route="/">${logo()}<span>Delta.tools</span></div>
+    <span style="flex:1"></span>
+    <button class="menu-btn" id="menu-theme" aria-label="Toggle theme">${icon('sun')}</button>
+  `;
   const sidebar = renderSidebar();
+  const backdrop = document.createElement('div');
+  backdrop.className = 'mobile-backdrop';
+  backdrop.hidden = true;
   const main = document.createElement('div');
   main.className = 'main';
   const content = document.createElement('div');
   content.className = 'content';
   content.id = 'content';
   main.appendChild(content);
+  app.appendChild(topbar);
   app.appendChild(sidebar);
+  app.appendChild(backdrop);
   app.appendChild(main);
+
+  const openMenu = (): void => {
+    sidebar.classList.add('open');
+    backdrop.hidden = false;
+  };
+  const closeMenu = (): void => {
+    sidebar.classList.remove('open');
+    backdrop.hidden = true;
+  };
+  topbar.querySelector('#menu-btn')!.addEventListener('click', openMenu);
+  topbar.querySelector('.mobile-logo')!.addEventListener('click', () => {
+    window.location.hash = '/';
+  });
+  topbar.querySelector('#menu-theme')!.addEventListener('click', () => {
+    state.setTheme(state.theme === 'dark' ? 'light' : 'dark');
+  });
+  // Navigating re-renders the shell (fresh sidebar without .open), so the
+  // drawer closes by itself on every route change.
+  backdrop.addEventListener('click', closeMenu);
 }
 
 function routeContent(route: Route): HTMLElement {

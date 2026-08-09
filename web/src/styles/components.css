@@ -942,8 +942,177 @@ span.svg-icon img {
   background: var(--card);
   color: var(--text);
 }
+
+/* Extra UI bits */
+.mem-note {
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  border: 1px solid color-mix(in srgb, var(--brand) 30%, transparent);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+
+/* Mobile: top bar + sidebar drawer + touch-friendly layout */
 @media (max-width: 720px) {
   .sidebar {
+    display: none;
+  }
+
+  .mobile-topbar {
+    display: flex;
+  }
+
+  .sidebar.open {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(280px, 84vw);
+    margin: 0;
+    border-radius: 0;
+    z-index: 60;
+    box-shadow: 0 0 48px rgba(0, 0, 0, 0.55);
+  }
+
+  .content {
+    padding: 14px 12px;
+    gap: 12px;
+  }
+
+  .hero-headline {
+    font-size: 26px;
+  }
+
+  .hero .hero-logo svg {
+    width: 46px;
+    height: 46px;
+  }
+
+  .hero .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-sub {
+    font-size: 13px;
+  }
+
+  .hero-center {
+    gap: 11px;
+  }
+
+  .hero-chips {
+    gap: 5px;
+  }
+
+  .chip {
+    font-size: 11.5px;
+    padding: 5px 10px;
+  }
+
+  .home-cats {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+
+  .tool-grid {
+    grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+    gap: 8px;
+  }
+
+  .plugin-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
+  .dropzone {
+    padding: 28px 16px;
+  }
+
+  .dropzone .dz-icon {
+    font-size: 26px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  /* Stack each queue row vertically on phones: file info on top, progress
+     and actions below — buttons stay large enough to tap. */
+  .converter-row {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .converter-row .file-info {
+    flex-basis: 100%;
+  }
+
+  .converter-row .progress-track {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .converter-row .arrow-icon {
+    display: none;
+  }
+
+  .converter-row .btn {
+    flex: 1;
+    padding: 10px 12px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .segment {
+    flex-wrap: wrap;
+  }
+
+  .toast-wrap {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    align-items: stretch;
+  }
+
+  .toast {
+    justify-content: center;
+  }
+
+  .modal {
+    width: calc(100vw - 24px);
+    padding: 18px;
+  }
+
+  .auth-card {
+    width: calc(100vw - 24px);
+  }
+
+  .home-section-head h2 {
+    font-size: 15px;
+  }
+
+  .page-title {
+    font-size: 17px;
+  }
+
+  .search-result-badges .badge:last-child {
     display: none;
   }
 }
