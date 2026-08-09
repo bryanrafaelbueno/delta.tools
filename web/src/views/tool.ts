@@ -9,6 +9,14 @@ import { state } from '../state';
 import { api } from '../api';
 import { icon } from '../ui/icons';
 import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
+import {
+  assertFileFitsMemory,
+  estimatePeakBytes,
+  isLowMemoryDevice,
+  memoryLimitBytes,
+  formatMemoryLimit,
+  type MemoryKind,
+} from '../converters/memory';
 
 interface JobState {
   name: string;
@@ -16,6 +24,26 @@ interface JobState {
   status: 'pending' | 'running' | 'done' | 'error';
   progress: number;
   error?: string;
+}
+
+function memoryKindFor(def: { category: string; id: string }): MemoryKind {
+  if (def.id.startsWith('repair-')) return def.id.startsWith('repair-vid') ? 'video' : 'audio';
+  switch (def.category) {
+    case 'video':
+      return 'video';
+    case 'audio':
+      return 'audio';
+    case 'image':
+      return 'image';
+    case 'document':
+      return 'document';
+    case 'text':
+      return 'text';
+    case 'archive':
+      return 'archive';
+    default:
+      return 'other';
+  }
 }
 
 export function renderTool(id: string): HTMLElement {
@@ -37,6 +65,17 @@ export function renderTool(id: string): HTMLElement {
   const TEXT_INPUTS = new Set(['txt', 'md', 'csv', 'json', 'html']);
   const acceptsText = TEXT_INPUTS.has(def.from);
   const jobs = new Map<string, JobState>();
+  const results = new Map<string, { name: string; type: string; data: ArrayBuffer }>();
+  const kind = memoryKindFor(def);
+  const lowMemory = isLowMemoryDevice();
+  const memoryLimit = memoryLimitBytes();
+  // Retained input+result bytes on this page; we count it so a stream of
+  // conversions cannot silently exceed the mobile memory budget.
+  let retainedBytes = 0;
+
+  const sizeHint = lowMemory
+    ? `max ~${formatBytes(Math.floor(memoryLimit / estimatePeakBytes(1, kind)))} per ${def.from.toUpperCase()} · `
+    : '';
 
   el.innerHTML = `
     <div>
@@ -50,9 +89,10 @@ export function renderTool(id: string): HTMLElement {
       <div class="dropzone" id="dropzone">
         <div class="dz-icon">${renderIcon(def.icon, def.iconColor, 30)}</div>
         <div class="dz-title">Drop your ${def.from.toUpperCase()} ${isMulti ? 'files' : 'file'} here</div>
-        <div class="dz-sub">or click to browse · max ${isMulti ? '10' : '1'} ${def.from.toUpperCase()}</div>
+        <div class="dz-sub">${sizeHint}or click to browse · max ${isMulti ? '10' : '1'} ${def.from.toUpperCase()}</div>
         <input type="file" id="file-input" ${isMulti ? 'multiple' : ''} accept=".${def.from},${acceptType(def.from)}" />
       </div>
+      ${lowMemory ? `<div class="mem-note">📱 Low-memory mode: conversions are capped at ${formatMemoryLimit(memoryLimit)} per page so your device stays responsive.</div>` : ''}
       ${acceptsText ? `
       <div class="text-input-wrap">
         <div class="text-input-divider">or paste ${def.from === 'txt' ? 'text / a URL' : def.from.toUpperCase()} below</div>
@@ -153,6 +193,27 @@ export function renderTool(id: string): HTMLElement {
     }
     if (jobs.has(file.name)) return;
 
+    // Memory budget: refuse single files whose estimated peak would blow the
+    // page limit, and refuse adding more work when the page already retains
+    // too much converted data (low-memory devices only).
+    try {
+      assertFileFitsMemory(file.size, kind);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : String(err), 'error');
+      return;
+    }
+    if (lowMemory && memoryLimit !== Infinity) {
+      const wouldRetain = retainedBytes + estimatePeakBytes(file.size, kind);
+      if (wouldRetain > memoryLimit) {
+        toast(
+          `Memory limit reached (~${formatMemoryLimit(memoryLimit)} in use). Clear finished conversions or reload the page before converting more.`,
+          'error',
+        );
+        return;
+      }
+    }
+    retainedBytes += file.size;
+
     const job: JobState = { name: file.name, size: file.size, status: 'pending', progress: 0 };
     jobs.set(file.name, job);
     queue.appendChild(jobRow(job, def.id));
@@ -175,6 +236,7 @@ export function renderTool(id: string): HTMLElement {
       <button class="btn btn-danger" data-action="clear" style="padding:6px 12px">Clear</button>
     `;
     row.querySelector('[data-action="clear"]')!.addEventListener('click', () => {
+      retainedBytes = Math.max(0, retainedBytes - (results.get(job.name)?.data.byteLength ?? job.size));
       jobs.delete(job.name);
       row.remove();
     });
@@ -199,6 +261,7 @@ export function renderTool(id: string): HTMLElement {
       job.status = 'done';
       job.progress = 1;
       results.set(job.name, result);
+      retainedBytes += result.data.byteLength;
       updateRow(job, def.id);
       showResult(result);
     } catch (err) {
@@ -260,13 +323,12 @@ export function renderTool(id: string): HTMLElement {
       type: 'application/pdf',
       data: bytes.buffer as ArrayBuffer,
     };
+    retainedBytes += result.data.byteLength;
     results.set(result.name, result);
     showResult(result);
     const resultPanel = el.querySelector('#result-panel') as HTMLElement;
     resultPanel.style.display = 'block';
   }
-
-  const results = new Map<string, { name: string; type: string; data: ArrayBuffer }>();
 
   function showResult(result: { name: string; type: string; data: ArrayBuffer }): void {
     const resultPanel = el.querySelector('#result-panel') as HTMLElement;
