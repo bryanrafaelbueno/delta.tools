@@ -9,3 +9,5 @@ server/data/
 *.sqlite
 *.sqlite3
 .vite/
+.vercel
+.env*
