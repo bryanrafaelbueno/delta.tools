@@ -1,5 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
+import { zipSync } from 'fflate';
 import { registry } from './registry';
 import { svgIcons } from '../ui/svg-icons';
 import { toResult } from './helpers';
@@ -49,8 +50,19 @@ export function registerPdfConverters(): void {
         if (images.length === 1) {
           return toResult(images[0], `${baseNoExt(input.name)}.${fmt}`);
         }
-        const combined = new Blob(images, { type: images[0].type });
-        return toResult(combined, `${baseNoExt(input.name)}-pages.${fmt}`);
+        // Multiple pages can't be concatenated into a single image — bundle
+        // each page as its own image inside a ZIP instead.
+        const entries: Array<[string, Uint8Array]> = [];
+        for (let i = 0; i < images.length; i++) {
+          const ab = await images[i].arrayBuffer();
+          entries.push([`page-${String(i + 1).padStart(2, '0')}.${fmt}`, new Uint8Array(ab)]);
+        }
+        const zipped = zipSync(Object.fromEntries(entries), { level: 6 });
+        return {
+          name: `${baseNoExt(input.name)}-pages.zip`,
+          type: 'application/zip',
+          data: zipped.buffer as ArrayBuffer,
+        };
       },
     );
   }
