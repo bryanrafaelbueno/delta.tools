@@ -186,7 +186,11 @@ function publishModal(): void {
   overlay.innerHTML = `
     <div class="modal" style="width:min(620px,calc(100vw - 40px))">
       <h2>Publish a plugin</h2>
-      <div class="page-sub" style="font-size:12.5px;color:var(--text-muted)">See <a href="https://github.com/bryanrafaelbueno/delta.tools/blob/main/docs/PLUGIN_API.md" target="_blank">docs/PLUGIN_API.md</a> to learn how to write one.</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div class="page-sub" style="font-size:12.5px;color:var(--text-muted);flex:1">Fill the form below or import a manifest JSON file.</div>
+        <label class="btn btn-ghost" for="p-json-file" style="cursor:pointer;padding:6px 12px;font-size:12px;margin:0">Import JSON…</label>
+        <input type="file" id="p-json-file" accept=".json,application/json" style="display:none"/>
+      </div>
       <div class="form-row">
         <div class="form-field"><label>Name</label><input id="p-name" placeholder="My Converter"/></div>
         <div class="form-field"><label>ID (reverse domain)</label><input id="p-id" placeholder="com.example.myconverter"/></div>
@@ -238,8 +242,44 @@ function publishModal(): void {
     clearBtn.style.display = 'none';
   });
 
-  overlay.querySelector('#p-submit')!.addEventListener('click', async () => {
-    const inputs = (overlay.querySelector('#p-inputs') as HTMLInputElement).value
+  // Import a manifest .json file and prefill every field
+  overlay.querySelector('#p-json-file')!.addEventListener('change', async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const m = JSON.parse(text);
+      if (!m || typeof m !== 'object') throw new Error('manifest must be a JSON object');
+      const set = (sel: string, val: unknown): void => {
+        const el = overlay.querySelector(sel) as HTMLInputElement;
+        if (el && val != null) el.value = String(val);
+      };
+      set('#p-name', m.name);
+      set('#p-id', m.id);
+      set('#p-version', m.version);
+      set('#p-desc', m.description);
+      set('#p-inputs', Array.isArray(m.inputs) ? m.inputs.join(', ') : m.inputs);
+      set('#p-outputs', Array.isArray(m.outputs) ? m.outputs.join(', ') : m.outputs);
+      if (typeof m.entry === 'string') {
+        (overlay.querySelector('#p-entry') as HTMLTextAreaElement).value = m.entry;
+      }
+      // Icon: prefer the picked icon; if the manifest carries an SVG data URI
+      // or http URL, show it in the preview.
+      const icon = typeof m.icon === 'string' && m.icon.trim() ? m.icon : null;
+      if (icon && /^(https?:|data:)/.test(icon)) {
+        picked = { url: icon, color: typeof m.iconColor === 'string' ? m.iconColor : '' };
+        preview.innerHTML = renderIcon(picked.url, picked.color, 22);
+        hydrateSvgIconsAsync(preview);
+        clearBtn.style.display = '';
+      }
+      toast('Manifest imported — review and publish', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? `Invalid manifest: ${err.message}` : 'Invalid manifest file', 'error');
+    }
+    (e.target as HTMLInputElement).value = '';
+  });
+
+  overlay.querySelector('#p-submit')!.addEventListener('click', async () => {    const inputs = (overlay.querySelector('#p-inputs') as HTMLInputElement).value
       .split(',')
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
