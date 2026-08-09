@@ -3,6 +3,7 @@ import { toBlobURL } from '@ffmpeg/util';
 import { registry } from './registry';
 import { svgIconForExt, svgIcons } from '../ui/svg-icons';
 import { toResult } from './helpers';
+import { assertFileFitsMemory, type MemoryKind } from './memory';
 
 const CORE_URL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm';
 
@@ -32,15 +33,13 @@ export function getFfmpeg(): Promise<FFmpeg> {
 }
 
 interface Job {
-  id: number;
   inputName: string;
   outputName: string;
   attempts: string[][];
   data: ArrayBuffer;
+  kind?: MemoryKind;
   onProgress?: (p: number) => void;
 }
-
-let jobId = 0;
 
 // The FFmpeg instance is a singleton backed by a single web worker with an
 // in-memory filesystem. Running two conversions at the same time corrupts the
@@ -55,6 +54,28 @@ function enqueue<T>(fn: () => Promise<T>): Promise<T> {
     () => undefined,
   );
   return next;
+}
+
+// Long-lived workers also rot: after ~60-70 sequential execs the ffmpeg.wasm
+// heap deterministically corrupts ("memory access out of bounds") in some
+// environments. Recycle the worker every 40 execs so long sessions (e.g.
+// repairing a batch of old files) never hit the crash point. The reset happens
+// inside the serialized job chain, so the next conversion transparently spins
+// up a fresh instance.
+let execCount = 0;
+const RESET_AFTER_EXECS = 40;
+
+async function resetFfmpegWorker(): Promise<void> {
+  const f = await ffmpegPromise?.catch(() => null);
+  if (f) {
+    try {
+      f.terminate();
+    } catch {
+      // worker already dead — nothing to clean up
+    }
+  }
+  ffmpegPromise = null;
+  loadProgress = 0;
 }
 
 async function safeDelete(ffmpeg: FFmpeg, path: string): Promise<void> {
@@ -93,7 +114,10 @@ function friendlyError(detail: string, logs: string[]): Error {
   return new Error(detail);
 }
 
-async function runFfmpeg(job: Job): Promise<Uint8Array> {
+export async function runFfmpeg(job: Job): Promise<Uint8Array> {
+  // On low-memory devices (mobile), refuse jobs whose estimated peak memory
+  // would exceed the 1024 MB page budget instead of crashing the tab.
+  assertFileFitsMemory(job.data.byteLength, job.kind ?? 'video');
   return enqueue(async () => {
     const ffmpeg = await getFfmpeg();
     const onProgress = (progress: number): void => {
@@ -138,6 +162,11 @@ async function runFfmpeg(job: Job): Promise<Uint8Array> {
     } finally {
       ffmpeg.off('progress', handler);
       ffmpeg.off('log', logHandler);
+      execCount++;
+      if (execCount >= RESET_AFTER_EXECS) {
+        execCount = 0;
+        await resetFfmpegWorker();
+      }
     }
   });
 }
@@ -166,7 +195,7 @@ function registerAudioConverter(from: string, to: string): void {
     },
     async (input, onProgress) => {
       const out = await runFfmpeg({
-        id: ++jobId,
+        kind: 'audio',
         inputName: input.name,
         outputName: `out.${to}`,
         attempts: [['-i', input.name, '-vn', '-acodec', codecFor(to), '-y', `out.${to}`]],
@@ -192,7 +221,7 @@ function registerVideoConverter(from: string, to: string): void {
     },
     async (input, onProgress) => {
       const out = await runFfmpeg({
-        id: ++jobId,
+        kind: 'video',
         inputName: input.name,
         outputName: `out.${to}`,
         // MP4/MOV/MKV/AVI all share the same H.264+AAC codecs, so a container
@@ -226,7 +255,7 @@ function registerVideoToAudio(from: string): void {
     },
     async (input, onProgress) => {
       const out = await runFfmpeg({
-        id: ++jobId,
+        kind: 'audio',
         inputName: input.name,
         outputName: 'out.mp3',
         attempts: [['-i', input.name, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', '-y', 'out.mp3']],
@@ -252,7 +281,7 @@ function registerVideoToGif(from: string): void {
     },
     async (input, onProgress) => {
       const out = await runFfmpeg({
-        id: ++jobId,
+        kind: 'video',
         inputName: input.name,
         outputName: 'out.gif',
         attempts: [['-i', input.name, '-vf', 'fps=12,scale=480:-1:flags=lanczos', '-y', 'out.gif']],

@@ -3,6 +3,7 @@ import { registerMediaConverters } from './media';
 import { registerPdfConverters } from './pdf';
 import { registerArchiveConverters } from './archive';
 import { registerTextConverters } from './text';
+import { registerRepairConverters } from './repair';
 
 export function registerBuiltinConverters(): void {
   registerImageConverters();
@@ -10,4 +11,5 @@ export function registerBuiltinConverters(): void {
   registerPdfConverters();
   registerArchiveConverters();
   registerTextConverters();
+  registerRepairConverters();
 }
