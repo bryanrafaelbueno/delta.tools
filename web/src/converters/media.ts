@@ -66,13 +66,25 @@ async function safeDelete(ffmpeg: FFmpeg, path: string): Promise<void> {
 }
 
 function describeFailure(logs: string[]): string {
-  const relevant = logs
-    .filter((l) => /error|failed|invalid|not supported|no such file/i.test(l))
-    .slice(-3)
-    .join(' | ');
+  const relevant = [...new Set(logs.filter((l) => /error|failed|invalid|not supported|no such file/i.test(l)))].slice(-3).join(' | ');
   if (relevant) return relevant;
   const last = logs[logs.length - 1];
   return last || 'no ffmpeg output';
+}
+
+function friendlyError(detail: string, logs: string[]): Error {
+  const unreadable = /invalid data found when processing input|moov atom not found|does not look like/i.test(
+    `${detail} ${logs.join(' ')}`,
+  );
+  if (unreadable) {
+    return new Error(
+      'Your file could not be read by the converter. It is likely corrupt or an incomplete download — check that it plays in a video player, then download it again.',
+    );
+  }
+  if (/ErrnoError|FS error|out of memory/i.test(detail) && logs.length) {
+    return new Error(`${detail} | ffmpeg: ${describeFailure(logs)}`);
+  }
+  return new Error(detail);
 }
 
 async function runFfmpeg(job: Job): Promise<Uint8Array> {
@@ -116,10 +128,7 @@ async function runFfmpeg(job: Job): Promise<Uint8Array> {
       await safeDelete(ffmpeg, job.inputName);
       await safeDelete(ffmpeg, job.outputName);
       const detail = err instanceof Error ? err.message : String(err);
-      if (/ErrnoError|FS error|out of memory/i.test(detail) && logs.length) {
-        throw new Error(`${detail} | ffmpeg: ${describeFailure(logs)}`);
-      }
-      throw err;
+      throw friendlyError(detail, logs);
     } finally {
       ffmpeg.off('progress', handler);
       ffmpeg.off('log', logHandler);
