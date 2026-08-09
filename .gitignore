@@ -11,3 +11,4 @@ server/data/
 .vite/
 .vercel
 .env*
+api/.web-dist/

@@ -1,24 +1,18 @@
 {
   "version": 2,
-  "buildCommand": "npm run build -w web",
+  "buildCommand": "sh server/scripts/build-for-vercel.sh",
   "installCommand": "npm install",
   "builds": [
     {
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": "web/dist/**"
+        "includeFiles": ["api/.web-dist/**", "web/dist/**"]
       }
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "api/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "api/index.js"
-    }
+    { "src": "/api/(.*)", "dest": "api/index.js" },
+    { "src": "/(.*)", "dest": "api/index.js" }
   ]
 }

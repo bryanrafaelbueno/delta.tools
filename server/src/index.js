@@ -40,8 +40,12 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const webDist = join(__dirname, '..', '..', 'web', 'dist');
-if (existsSync(webDist)) {
+// Local builds put the dist in web/dist; the Vercel build script also copies
+// it into api/.web-dist so the serverless bundle always contains it.
+const webDist = [join(__dirname, '..', '..', 'web', 'dist'), join(__dirname, '..', '..', 'api', '.web-dist')].find(
+  (p) => existsSync(p),
+);
+if (webDist) {
   app.use(express.static(webDist));
   app.get(/^\/(?!api).*/, (_req, res) => res.sendFile(join(webDist, 'index.html')));
 }
