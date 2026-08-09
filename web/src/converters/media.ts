@@ -35,35 +35,96 @@ interface Job {
   id: number;
   inputName: string;
   outputName: string;
-  args: string[];
+  attempts: string[][];
   data: ArrayBuffer;
   onProgress?: (p: number) => void;
 }
 
 let jobId = 0;
 
-async function runFfmpeg(job: Job): Promise<Uint8Array> {
-  const ffmpeg = await getFfmpeg();
-  const onProgress = (progress: number): void => {
-    job.onProgress?.(progress);
-  };
-  const handler = (e: { progress: number }): void => onProgress(e.progress);
-  const logHandler = (e: { message: string }): void => {
-    console.debug('[ffmpeg]', e.message);
-  };
-  ffmpeg.on('progress', handler);
-  ffmpeg.on('log', logHandler);
+// The FFmpeg instance is a singleton backed by a single web worker with an
+// in-memory filesystem. Running two conversions at the same time corrupts the
+// worker's MEMFS (one job's writeFile/deleteFile breaks the other's files),
+// which surfaces as the cryptic "ErrnoError: FS error". Serialize every job.
+let jobChain: Promise<unknown> = Promise.resolve();
+
+function enqueue<T>(fn: () => Promise<T>): Promise<T> {
+  const next = jobChain.then(fn, fn);
+  jobChain = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
+
+async function safeDelete(ffmpeg: FFmpeg, path: string): Promise<void> {
   try {
-    await ffmpeg.writeFile(job.inputName, new Uint8Array(job.data));
-    await ffmpeg.exec(job.args);
-    const out = await ffmpeg.readFile(job.outputName);
-    await ffmpeg.deleteFile(job.inputName);
-    await ffmpeg.deleteFile(job.outputName);
-    return out as Uint8Array;
-  } finally {
-    ffmpeg.off('progress', handler);
-    ffmpeg.off('log', logHandler);
+    await ffmpeg.deleteFile(path);
+  } catch {
+    // The file may not exist (failed exec, crashed job); nothing to clean up.
   }
+}
+
+function describeFailure(logs: string[]): string {
+  const relevant = logs
+    .filter((l) => /error|failed|invalid|not supported|no such file/i.test(l))
+    .slice(-3)
+    .join(' | ');
+  if (relevant) return relevant;
+  const last = logs[logs.length - 1];
+  return last || 'no ffmpeg output';
+}
+
+async function runFfmpeg(job: Job): Promise<Uint8Array> {
+  return enqueue(async () => {
+    const ffmpeg = await getFfmpeg();
+    const onProgress = (progress: number): void => {
+      job.onProgress?.(progress);
+    };
+    const handler = (e: { progress: number }): void => onProgress(e.progress);
+    const logs: string[] = [];
+    const logHandler = (e: { message: string }): void => {
+      logs.push(e.message);
+      if (logs.length > 200) logs.shift();
+      console.debug('[ffmpeg]', e.message);
+    };
+    ffmpeg.on('progress', handler);
+    ffmpeg.on('log', logHandler);
+    try {
+      await ffmpeg.writeFile(job.inputName, new Uint8Array(job.data));
+      let done = false;
+      for (const attempt of job.attempts) {
+        const ret = await ffmpeg.exec(attempt);
+        if (ret === 0) {
+          done = true;
+          break;
+        }
+        if (job.attempts.length > 1) {
+          // The muxer rejected the stream copy (e.g. unsupported codec for
+          // the target container); try the next attempt.
+          console.debug('[ffmpeg] attempt failed, retrying:', attempt.join(' '));
+        }
+      }
+      if (!done) {
+        throw new Error(`ffmpeg exited with an error: ${describeFailure(logs)}`);
+      }
+      const out = await ffmpeg.readFile(job.outputName);
+      await safeDelete(ffmpeg, job.inputName);
+      await safeDelete(ffmpeg, job.outputName);
+      return out as Uint8Array;
+    } catch (err) {
+      await safeDelete(ffmpeg, job.inputName);
+      await safeDelete(ffmpeg, job.outputName);
+      const detail = err instanceof Error ? err.message : String(err);
+      if (/ErrnoError|FS error|out of memory/i.test(detail) && logs.length) {
+        throw new Error(`${detail} | ffmpeg: ${describeFailure(logs)}`);
+      }
+      throw err;
+    } finally {
+      ffmpeg.off('progress', handler);
+      ffmpeg.off('log', logHandler);
+    }
+  });
 }
 
 function icon(ext: string): string {
@@ -93,7 +154,7 @@ function registerAudioConverter(from: string, to: string): void {
         id: ++jobId,
         inputName: input.name,
         outputName: `out.${to}`,
-        args: ['-i', input.name, '-vn', '-acodec', codecFor(to), '-y', `out.${to}`],
+        attempts: [['-i', input.name, '-vn', '-acodec', codecFor(to), '-y', `out.${to}`]],
         data: input.data,
         onProgress,
       });
@@ -119,7 +180,15 @@ function registerVideoConverter(from: string, to: string): void {
         id: ++jobId,
         inputName: input.name,
         outputName: `out.${to}`,
-        args: ['-i', input.name, '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', '-y', `out.${to}`],
+        // MP4/MOV/MKV/AVI all share the same H.264+AAC codecs, so a container
+        // change is a pure remux. Stream copy first: it is ~10-50x faster and
+        // uses far less wasm heap (re-encoding large files blows up the MEMFS
+        // and fails with "ErrnoError: FS error"). Fall back to re-encoding
+        // when the target muxer rejects the stream (e.g. unsupported codec).
+        attempts: [
+          ['-i', input.name, '-map', '0', '-c', 'copy', '-y', `out.${to}`],
+          ['-i', input.name, '-c:v', 'libx264', '-preset', 'ultrafast', '-c:a', 'aac', '-y', `out.${to}`],
+        ],
         data: input.data,
         onProgress,
       });
@@ -145,7 +214,7 @@ function registerVideoToAudio(from: string): void {
         id: ++jobId,
         inputName: input.name,
         outputName: 'out.mp3',
-        args: ['-i', input.name, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', '-y', 'out.mp3'],
+        attempts: [['-i', input.name, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', '-y', 'out.mp3']],
         data: input.data,
         onProgress,
       });
@@ -171,7 +240,7 @@ function registerVideoToGif(from: string): void {
         id: ++jobId,
         inputName: input.name,
         outputName: 'out.gif',
-        args: ['-i', input.name, '-vf', 'fps=12,scale=480:-1:flags=lanczos', '-y', 'out.gif'],
+        attempts: [['-i', input.name, '-vf', 'fps=12,scale=480:-1:flags=lanczos', '-y', 'out.gif']],
         data: input.data,
         onProgress,
       });
