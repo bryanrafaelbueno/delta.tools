@@ -4,6 +4,7 @@ import { toast } from '../ui/toast';
 import { convertWithPlugin } from '../plugins/manager';
 import { renderIcon, hydrateSvgIconsAsync } from '../ui/icon-render';
 import { svgIcons } from '../ui/svg-icons';
+import { extOf } from '../types';
 import type { MarketplacePlugin, ConvertInput } from '../types';
 
 export function renderModeration(): HTMLElement {
@@ -64,6 +65,7 @@ export function renderModeration(): HTMLElement {
     }
     list.innerHTML = shown.map(pluginBlock).join('');
     hydrateSvgIconsAsync(list);
+    for (const p of shown) updateInputLabel(list, p.id);
     list.querySelectorAll('[data-mod-code]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-mod-code')!;
@@ -76,6 +78,34 @@ export function renderModeration(): HTMLElement {
         const id = btn.getAttribute('data-mod-test')!;
         const p = plugins.find((x) => x.id === id)!;
         await runTest(p, btn as HTMLButtonElement);
+      });
+    });
+    list.querySelectorAll('[data-mod-upload]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-mod-upload')!;
+        const input = list.querySelector(`[data-mod-file="${CSS.escape(id)}"]`) as HTMLInputElement | null;
+        input?.click();
+      });
+    });
+    list.querySelectorAll('[data-mod-file]').forEach((input) => {
+      input.addEventListener('change', async () => {
+        const id = input.getAttribute('data-mod-file')!;
+        const file = (input as HTMLInputElement).files?.[0];
+        if (!file) return;
+        try {
+          customInputs.set(id, { name: file.name, ext: extOf(file.name), type: file.type, data: await file.arrayBuffer() });
+          updateInputLabel(list, id);
+          toast(`Custom test input set: ${file.name}`, 'success');
+        } catch {
+          toast('Could not read that file', 'error');
+        }
+      });
+    });
+    list.querySelectorAll('[data-mod-clear]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-mod-clear')!;
+        customInputs.delete(id);
+        updateInputLabel(list, id);
       });
     });
     list.querySelectorAll('[data-mod-approve]').forEach((btn) => {
@@ -115,6 +145,20 @@ function statusBadge(status: string): string {
   return `<span class="badge ${cls}">${status}</span>`;
 }
 
+// Files the moderator picked to test each plugin with, keyed by plugin id.
+// When set, "Run test" uses the custom file instead of the synthetic sample.
+const customInputs = new Map<string, ConvertInput>();
+
+function updateInputLabel(root: HTMLElement, id: string): void {
+  const label = root.querySelector(`[data-mod-input="${CSS.escape(id)}"]`) as HTMLElement | null;
+  const clear = root.querySelector(`[data-mod-clear="${CSS.escape(id)}"]`) as HTMLElement | null;
+  if (!label) return;
+  const input = customInputs.get(id);
+  label.textContent = input ? `custom input: ${input.name}` : '';
+  label.style.display = input ? '' : 'none';
+  if (clear) clear.style.display = input ? '' : 'none';
+}
+
 function pluginBlock(p: MarketplacePlugin): string {
   return `
     <div class="mod-plugin" data-id="${p.id}">
@@ -129,6 +173,10 @@ function pluginBlock(p: MarketplacePlugin): string {
       <div class="pdesc">${p.description}</div>
       <div class="mod-actions">
         <button class="btn btn-ghost" data-mod-code="${p.id}" style="padding:5px 12px;font-size:12px">View code</button>
+        <button class="btn btn-ghost" data-mod-upload="${p.id}" style="padding:5px 12px;font-size:12px">Upload input</button>
+        <input type="file" hidden data-mod-file="${p.id}" accept=".${p.inputs[0] ?? ''},${mimeFor(p.inputs[0] ?? 'txt')}" />
+        <span class="mod-input-label" data-mod-input="${p.id}" style="font-size:11.5px;color:var(--text-muted);display:none"></span>
+        <button class="btn btn-ghost" data-mod-clear="${p.id}" style="padding:2px 8px;font-size:11px;display:none" title="Clear custom input">&#10005;</button>
         <button class="btn btn-ghost" data-mod-test="${p.id}" style="padding:5px 12px;font-size:12px">Run test</button>
         <span style="flex:1"></span>
         <button class="btn btn-primary" data-mod-approve="${p.id}" style="padding:5px 12px;font-size:12px" ${p.status === 'approved' ? 'disabled' : ''}>Approve</button>
@@ -167,7 +215,7 @@ async function runTest(p: MarketplacePlugin, btn: HTMLButtonElement): Promise<vo
   btn.disabled = true;
   btn.textContent = 'Testing…';
   try {
-    const input = makeTestInput(p);
+    const input = customInputs.get(p.id) ?? makeTestInput(p);
     const raw = await convertWithPlugin(
       {
         id: p.id,
@@ -187,7 +235,7 @@ async function runTest(p: MarketplacePlugin, btn: HTMLButtonElement): Promise<vo
     const size = out.data.byteLength;
     const preview = previewOutput(out);
     if (resultEl) {
-      resultEl.innerHTML = `<div class="mod-test-pass">&#10003; Ran successfully — produced <b>${out.name}</b> (${size} bytes).<br/>${preview}</div>`;
+      resultEl.innerHTML = `<div class="mod-test-pass">&#10003; Ran successfully with <b>${escapeHtml(input.name)}</b> — produced <b>${escapeHtml(out.name)}</b> (${size} bytes).<br/>${preview}</div>`;
     }
     toast('Test passed', 'success');
   } catch (err) {
