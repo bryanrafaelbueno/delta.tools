@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { db } from '../db.js';
+import { db, persistNow } from '../db.js';
 import { hashPassword, verifyPassword, createSession, userFromToken, publicUser } from '../auth.js';
 
 export const authRouter = Router();
 
-authRouter.post('/register', (req, res) => {
+authRouter.post('/register', async (req, res) => {
   const { username, password } = req.body ?? {};
   if (!username || typeof username !== 'string' || username.length < 3 || username.length > 24) {
     return res.status(400).json({ error: 'Username must be 3-24 characters' });
@@ -23,6 +23,7 @@ authRouter.post('/register', (req, res) => {
     .prepare('INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)')
     .run(username, hash, salt);
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+  await persistNow();
   const token = createSession(user.id);
   res.status(201).json({ token, user: publicUser(user) });
 });

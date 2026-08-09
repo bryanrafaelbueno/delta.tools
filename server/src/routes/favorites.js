@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { db } from '../db.js';
+import { db, persistNow } from '../db.js';
 import { userFromToken } from '../auth.js';
 
 export const favoritesRouter = Router();
@@ -22,7 +22,7 @@ favoritesRouter.get('/', (req, res) => {
   res.json({ favorites: rows.map((r) => r.tool_id) });
 });
 
-favoritesRouter.post('/', (req, res) => {
+favoritesRouter.post('/', async (req, res) => {
   const user = authed(req, res);
   if (!user) return;
   const { toolId } = req.body ?? {};
@@ -30,12 +30,14 @@ favoritesRouter.post('/', (req, res) => {
     return res.status(400).json({ error: 'toolId is required' });
   }
   db.prepare('INSERT OR IGNORE INTO favorites (user_id, tool_id) VALUES (?, ?)').run(user.id, toolId);
+  await persistNow();
   res.json({ ok: true });
 });
 
-favoritesRouter.delete('/:toolId', (req, res) => {
+favoritesRouter.delete('/:toolId', async (req, res) => {
   const user = authed(req, res);
   if (!user) return;
   db.prepare('DELETE FROM favorites WHERE user_id = ? AND tool_id = ?').run(user.id, req.params.toolId);
+  await persistNow();
   res.json({ ok: true });
 });

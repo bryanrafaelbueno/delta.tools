@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { db } from '../db.js';
+import { db, persistNow } from '../db.js';
 import { userFromToken } from '../auth.js';
 
 const DEFAULT_ICON = 'https://api.iconify.design/mdi/puzzle.svg?color=%2300d4aa';
@@ -40,7 +40,7 @@ pluginsRouter.get('/:id', (req, res) => {
   res.json({ plugin: rowToPlugin(row) });
 });
 
-pluginsRouter.post('/', (req, res) => {
+pluginsRouter.post('/', async (req, res) => {
   const user = userFromToken(req.headers.authorization?.replace(/^Bearer /, ''));
   if (!user) return res.status(401).json({ error: 'Sign in to publish plugins' });
 
@@ -51,6 +51,7 @@ pluginsRouter.post('/', (req, res) => {
     if (!existing) return res.status(404).json({ error: 'Plugin not found' });
     if (existing.author_id !== user.id) return res.status(403).json({ error: 'Only the author can delete this plugin' });
     db.prepare('DELETE FROM plugins WHERE id = ?').run(id);
+    await persistNow();
     return res.json({ ok: true });
   }
 
@@ -67,6 +68,7 @@ pluginsRouter.post('/', (req, res) => {
       `UPDATE plugins SET name=?, version=?, description=?, icon=?, icon_color=?, inputs=?, outputs=?, entry=?, status='pending', reviewed_at=NULL, reviewed_by=NULL WHERE id=?`,
     ).run(name, version, description, icon ?? DEFAULT_ICON, iconColor ?? null, JSON.stringify(inputs), JSON.stringify(outputs), entry, id);
     const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
+    await persistNow();
     return res.json({ plugin: rowToPlugin(row) });
   }
 
@@ -75,13 +77,15 @@ pluginsRouter.post('/', (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
   ).run(id, name, version, description, user.username, icon ?? DEFAULT_ICON, iconColor ?? null, JSON.stringify(inputs), JSON.stringify(outputs), entry, user.id);
   const row = db.prepare('SELECT * FROM plugins WHERE id = ?').get(id);
+  await persistNow();
   res.status(201).json({ plugin: rowToPlugin(row) });
 });
 
 // Bump download count when a plugin is fetched (used by clients on install)
-pluginsRouter.post('/:id/install', (req, res) => {
+pluginsRouter.post('/:id/install', async (req, res) => {
   const info = db.prepare('UPDATE plugins SET downloads = downloads + 1 WHERE id = ?').run(req.params.id);
   if (info.changes === 0) return res.status(404).json({ error: 'Plugin not found' });
+  await persistNow();
   res.json({ ok: true });
 });
 

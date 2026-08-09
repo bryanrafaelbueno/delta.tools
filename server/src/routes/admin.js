@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { db } from '../db.js';
+import { db, persistNow } from '../db.js';
 import { userFromToken } from '../auth.js';
 
 export const adminRouter = Router();
@@ -42,7 +42,7 @@ adminRouter.get('/plugins', (req, res) => {
 });
 
 // Approve or reject a plugin (and any future update)
-adminRouter.post('/plugins/:id/review', (req, res) => {
+adminRouter.post('/plugins/:id/review', async (req, res) => {
   const admin = isAdmin(req);
   if (!admin) return res.status(403).json({ error: 'Admin only' });
 
@@ -57,6 +57,7 @@ adminRouter.post('/plugins/:id/review', (req, res) => {
   db.prepare(
     `UPDATE plugins SET status = ?, reviewed_at = datetime('now'), reviewed_by = ? WHERE id = ?`,
   ).run(action === 'approve' ? 'approved' : 'rejected', admin.id, req.params.id);
+  await persistNow();
 
   res.json({ ok: true, status: action === 'approve' ? 'approved' : 'rejected' });
 });
