@@ -12,6 +12,16 @@
       rel="stylesheet"
     />
     <title>Delta.tools</title>
+    <script>
+      // Apply the saved theme before first paint so a reload never flashes a
+      // black/wrong-color screen while the JS bundle boots.
+      try {
+        var t = localStorage.getItem('delta_theme');
+        document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
+      } catch (e) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

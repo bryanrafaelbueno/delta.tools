@@ -70,8 +70,11 @@ async function loadFavorites(): Promise<void> {
 async function boot(): Promise<void> {
   document.documentElement.dataset.theme = state.theme;
   registerBuiltinConverters();
-  await pluginManager.loadAll();
 
+  // Render the shell BEFORE any async work. Awaiting IndexedDB (plugins) or a
+  // network call before the first paint left #app empty on a black background
+  // whenever a restore or cache hiccup delayed/blocked boot (black screen that
+  // only a hard reload could fix). The app must always paint immediately.
   state.subscribe(() => {
     updateSidebarAuth();
     updateSidebarFavorites();
@@ -79,6 +82,19 @@ async function boot(): Promise<void> {
 
   window.addEventListener('hashchange', render);
   render();
+
+  // Chrome may restore cross-origin-isolated pages from bfcache after a
+  // reload/navigation; the frozen DOM stays but event handlers are gone, so
+  // re-render to rebuild a live shell.
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) render();
+  });
+
+  try {
+    await pluginManager.loadAll();
+  } catch (err) {
+    console.error('Failed to load installed plugins:', err);
+  }
 
   if (state.token) {
     api
@@ -132,3 +148,17 @@ function render(): void {
 }
 
 boot();
+
+// Last-resort guard: if anything throws before the first render, show a
+// recoverable screen instead of a black page (only fixable with shift+F5).
+window.addEventListener('error', () => {
+  if (!document.getElementById('content')?.children.length && !app.children.length) {
+    app.innerHTML = `
+      <div style="margin:auto;max-width:420px;text-align:center;display:flex;flex-direction:column;gap:12px;padding:24px">
+        <div class="page-title">Delta.tools failed to start</div>
+        <div class="page-sub">Something went wrong while loading the app. Try reloading — your files are never uploaded, so nothing is lost.</div>
+        <button class="btn btn-primary" style="margin:auto" onclick="window.location.reload()">Reload</button>
+      </div>
+    `;
+  }
+});
