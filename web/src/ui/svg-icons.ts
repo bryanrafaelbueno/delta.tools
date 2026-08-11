@@ -42,6 +42,7 @@ export function svgIconForExt(ext: string): string {
     ico: mdi('file-image', palette.image),
     avif: mdi('file-image', palette.image),
     gif: mdi('file-image', palette.image),
+    heic: mdi('file-image', palette.image),
     svg: mdi('vector-square', palette.image),
     mp3: mdi('music-note', palette.audio),
     wav: mdi('music-note', palette.audio),

@@ -410,6 +410,7 @@ function acceptType(ext: string): string {
     ico: 'image/x-icon',
     avif: 'image/avif',
     gif: 'image/gif',
+    heic: 'image/heic',
     mp3: 'audio/mpeg',
     wav: 'audio/wav',
     ogg: 'audio/ogg',

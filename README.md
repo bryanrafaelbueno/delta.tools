@@ -30,7 +30,7 @@ Ideal for anyone who wants a free, private, and ad-free alternative to online co
 ## Features
 
 - 100% in-browser conversions — files never leave your machine
-- Images — PNG, JPG, WEBP, BMP, ICO, AVIF, GIF
+- Images — PNG, JPG, WEBP, BMP, ICO, AVIF, GIF, HEIC (iPhone photos)
 - Audio — MP3, WAV, OGG, FLAC, AAC, M4A, OPUS
 - Video — MP4, WebM, MOV, MKV, AVI + GIF export + audio extraction
 - Documents — PDF → images, images → PDF, PDF merge, PDF compress
